@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Parity – virtuální trading</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="logo"><i></i>Parity</div><span class="demo">Demo · virtuální peníze</span>
+  <div class="stats">
+    <div class="stat"><small>Celková hodnota</small><b id="eq">–</b></div>
+    <div class="stat"><small>Volná hotovost</small><b id="cash">–</b></div>
+    <div class="stat"><small>Celkový zisk / ztráta</small><b id="pl">–</b></div>
+  </div>
+  <button class="hbtn" id="theme">Motiv</button>
+  <button class="hbtn" id="reset">Začít znovu</button>
+</header>
+<div class="app">
+  <section class="wl"><h3>Sledované trhy</h3><div id="wl"></div></section>
+  <section class="center">
+    <div class="ct">
+      <div><div class="sym" id="csym"></div><small class="mute" id="cname"></small></div>
+      <div class="px" id="cpx"></div><div id="cch" style="font-weight:700"></div>
+      <div class="tfs" id="tfs"></div>
+    </div>
+    <div class="chartwrap" id="cw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
+    <div class="tabs" id="tabs"></div>
+    <div class="tbl" id="tbl"></div>
+  </section>
+  <section class="right">
+    <div class="order">
+      <div class="sw"><button class="buy on" data-s="buy">Koupit</button><button class="sell" data-s="sell">Prodat</button></div>
+      <div class="otype"><button class="on" data-t="market">Tržní</button><button data-t="limit">Limitní</button></div>
+      <div id="limwrap" hidden><label for="lim">Limitní cena</label><div class="inp"><input id="lim" type="number" step="any" min="0"><span>USD</span></div></div>
+      <label for="qty">Množství</label>
+      <div class="inp"><input id="qty" type="number" step="any" min="0" placeholder="0.00"><span id="qu"></span></div>
+      <div class="pct"><button data-p="25">25 %</button><button data-p="50">50 %</button><button data-p="75">75 %</button><button data-p="100">Vše</button></div>
+      <div class="sum">
+        <div><span class="mute">Dostupné</span><span id="avail"></span></div>
+        <div><span class="mute">Poplatek 0,1 %</span><span id="fee"></span></div>
+        <div><b>Celkem</b><b id="tot"></b></div>
+      </div>
+      <button class="go buy" id="go">Koupit</button>
+    </div>
+    <div class="ob"><h3>Kniha příkazů</h3><div id="asks"></div><div class="mid" id="mid"></div><div id="bids"></div></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+<script src="script.js"></script>
+</body>
+</html>
