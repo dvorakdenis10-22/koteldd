@@ -18,6 +18,7 @@
   <nav>
     <a href="#sluzby">Služby</a>
     <a href="#oktavka">Oktávka</a>
+    <a href="#hra">Hra</a>
     <a href="#wolt">Wolt</a>
     <a href="#kontakt" class="nav-cta">Zavolat</a>
   </nav>
@@ -96,6 +97,23 @@
     </div>
   </section>
 
+  <section class="game" id="hra">
+    <div class="sec-head">
+      <h2>Cesta do KM Prona</h2>
+      <p>Dovez Kotlika z Vrbčan přes kopec na státovku, odboč vlevo a vyspi se u benzinky. Nafty má Oktávka na pár vteřin, pak jede na rez.</p>
+    </div>
+    <div class="game-box">
+      <canvas id="game" width="960" height="540" aria-label="Minihra: jízda z Vrbčan na benzinku KM Prona"></canvas>
+      <div class="g-overlay" id="g-ov">
+        <h3 id="g-title">Vrbčany → KM Prona</h3>
+        <p id="g-text">Jeď z vesnice do kopce, na státovce odboč vlevo a zaparkuj u benzinky.<br>Plyn: → nebo D. Brzda: ← nebo S. Blinkr: ↑ nebo mezerník.</p>
+        <div class="g-skins"><button data-skin="classic" class="on">Klasická Oktávka</button><button data-skin="wolt">Wolt Oktávka</button></div>
+        <button class="btn btn-main" id="g-start">Jet</button>
+      </div>
+      <div class="g-pad"><button data-k="brake">Brzda</button><button data-k="blink">Blinkr</button><button data-k="gas">Plyn</button></div>
+    </div>
+  </section>
+
   <section class="wolt-band" id="wolt">
     <div class="wolt-inner">
       <h2>Mezi zakázkami rozvážím Wolt</h2>
@@ -119,7 +137,7 @@
   <p>© <span id="year"></span> Kotlik. Kotle, záchody, elektro. Oktávka je v ceně opravy morální podpory.</p>
 </footer>
 
-<script src="photos.js"></script>
 <script src="script.js"></script>
+<script src="game.js"></script>
 </body>
 </html>
