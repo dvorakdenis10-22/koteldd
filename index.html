@@ -1,54 +1,124 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Parity – virtuální trading</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kotlik – kotle, záchody, elektro (a rezavá Oktávka)</title>
+<meta name="description" content="Kotlik: opravy kotlů, záchodů a elektroinstalace. Mezi zakázkami rozváží Wolt v Oktávce, která má víc rzi než nafty.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header>
-  <div class="logo"><i></i>Parity</div><span class="demo">Demo · virtuální peníze</span>
-  <div class="stats">
-    <div class="stat"><small>Celková hodnota</small><b id="eq">–</b></div>
-    <div class="stat"><small>Volná hotovost</small><b id="cash">–</b></div>
-    <div class="stat"><small>Celkový zisk / ztráta</small><b id="pl">–</b></div>
-  </div>
-  <button class="hbtn" id="theme">Motiv</button>
-  <button class="hbtn" id="reset">Začít znovu</button>
+
+<header class="top">
+  <a class="logo" href="#top">Kotlik</a>
+  <button class="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span></button>
+  <nav>
+    <a href="#sluzby">Služby</a>
+    <a href="#oktavka">Oktávka</a>
+    <a href="#wolt">Wolt</a>
+    <a href="#kontakt" class="nav-cta">Zavolat</a>
+  </nav>
 </header>
-<div class="app">
-  <section class="wl"><h3>Sledované trhy</h3><div id="wl"></div></section>
-  <section class="center">
-    <div class="ct">
-      <div><div class="sym" id="csym"></div><small class="mute" id="cname"></small></div>
-      <div class="px" id="cpx"></div><div id="cch" style="font-weight:700"></div>
-      <div class="tfs" id="tfs"></div>
-    </div>
-    <div class="chartwrap" id="cw"><canvas id="cv"></canvas><div class="tip" id="tip"></div></div>
-    <div class="tabs" id="tabs"></div>
-    <div class="tbl" id="tbl"></div>
-  </section>
-  <section class="right">
-    <div class="order">
-      <div class="sw"><button class="buy on" data-s="buy">Koupit</button><button class="sell" data-s="sell">Prodat</button></div>
-      <div class="otype"><button class="on" data-t="market">Tržní</button><button data-t="limit">Limitní</button></div>
-      <div id="limwrap" hidden><label for="lim">Limitní cena</label><div class="inp"><input id="lim" type="number" step="any" min="0"><span>USD</span></div></div>
-      <label for="qty">Množství</label>
-      <div class="inp"><input id="qty" type="number" step="any" min="0" placeholder="0.00"><span id="qu"></span></div>
-      <div class="pct"><button data-p="25">25 %</button><button data-p="50">50 %</button><button data-p="75">75 %</button><button data-p="100">Vše</button></div>
-      <div class="sum">
-        <div><span class="mute">Dostupné</span><span id="avail"></span></div>
-        <div><span class="mute">Poplatek 0,1 %</span><span id="fee"></span></div>
-        <div><b>Celkem</b><b id="tot"></b></div>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-text">
+      <p class="status"><span class="dot"></span><span id="status-text">Právě opravuje kotel</span></p>
+      <h1>Kotlik</h1>
+      <p class="lead">Kotle, záchody a elektřina. Opravím, co teče, netopí nebo nesvítí. A jezdím v Oktávce, která drží pohromadě hlavně vírou.</p>
+      <div class="actions">
+        <a class="btn btn-main" href="#kontakt">Objednat opravu</a>
+        <a class="btn btn-ghost" href="#oktavka">Ukázat Oktávku</a>
       </div>
-      <button class="go buy" id="go">Koupit</button>
     </div>
-    <div class="ob"><h3>Kniha příkazů</h3><div id="asks"></div><div class="mid" id="mid"></div><div id="bids"></div></div>
+
+    <div class="gauge-wrap">
+      <svg class="gauge" viewBox="0 0 200 200" role="img" aria-label="Manometr tlaku">
+        <circle cx="100" cy="100" r="94" class="g-rim"/>
+        <circle cx="100" cy="100" r="82" class="g-face"/>
+        <path d="M32 140 A74 74 0 0 1 60 46" class="zone z-cold"/>
+        <path d="M66 42 A74 74 0 0 1 134 42" class="zone z-ok"/>
+        <path d="M140 46 A74 74 0 0 1 168 140" class="zone z-hot"/>
+        <g id="ticks"></g>
+        <g id="needle" class="needle"><polygon points="97,100 100,34 103,100"/></g>
+        <circle cx="100" cy="100" r="8" class="g-hub"/>
+        <text x="100" y="150" class="g-label">BAR</text>
+      </svg>
+      <button class="gauge-btn" id="gauge-btn">Natlakovat</button>
+      <p class="gauge-note" id="gauge-note">Tlak v pořádku. Zatím.</p>
+    </div>
   </section>
-</div>
-<div class="toast" id="toast"></div>
+
+  <section class="services" id="sluzby">
+    <h2>Co všechno umím</h2>
+    <div class="svc-grid">
+      <article class="svc svc-kotle">
+        <h3>Kotle</h3>
+        <p>Servis, výměna, revize. Plynové i elektrické. Když kotel zaklepe, nejdřív zaklepu já.</p>
+      </article>
+      <article class="svc svc-wc">
+        <h3>Záchody</h3>
+        <p>Netěsní splachovač, hučí nádržka nebo nic neodtéká? Přijedu, vyřeším, nikomu to nebudu vyprávět.</p>
+      </article>
+      <article class="svc svc-elektro">
+        <h3>Elektrika</h3>
+        <p>Zásuvky, jističe, rozvaděče, světla. Svítím lidem, ne do očí.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="oktavka" id="oktavka">
+    <div class="sec-head">
+      <h2>Oktávka, legenda mezi vraky</h2>
+      <p>Skvělý řízek na kolech. Má víc rzi než nafty a přesto jede. Technici tomu říkají „nevysvětlitelné“.</p>
+    </div>
+
+    <div class="photos">
+      <figure class="photo tilt-l">
+        <div class="frame"><img src="img/oktavka.jpg" alt="Klasická rezavá Oktávka" data-ph="Fotka klasické Oktávky"></div>
+        <figcaption><strong>Klasická Oktávka.</strong> Služební vůz pro kotle, záchody i vodu pod podlahou.</figcaption>
+      </figure>
+      <figure class="photo tilt-r wolt">
+        <div class="frame"><img src="img/oktavka-wolt.jpg" alt="Oktávka s Wolt boxem" data-ph="Fotka Wolt Oktávky"></div>
+        <figcaption><strong>Wolt Oktávka.</strong> Stejné auto, jen s krabicí na zádech a vůní svíčkové.</figcaption>
+      </figure>
+    </div>
+
+    <div class="meter" id="meter">
+      <h3>Rezometr: z čeho se Oktávka skládá</h3>
+      <div class="bar" data-val="94"><span>Rez</span><div class="track"><i></i></div><b>0 %</b></div>
+      <div class="bar" data-val="6"><span>Nafta</span><div class="track"><i></i></div><b>0 %</b></div>
+      <div class="bar" data-val="100"><span>Lepicí páska</span><div class="track"><i></i></div><b>0 %</b></div>
+      <p class="meter-foot">Součet nevychází. Oktávka to nezajímá.</p>
+    </div>
+  </section>
+
+  <section class="wolt-band" id="wolt">
+    <div class="wolt-inner">
+      <h2>Mezi zakázkami rozvážím Wolt</h2>
+      <p>Když zrovna nikde netopí a nic netece, vezu vám jídlo. Pokud k němu dostanete i radu na odvzdušnění radiátoru, bereme to jako bonus.</p>
+      <blockquote id="quote">„Kotel ti spravím za hodinu, svíčkovou ti dovezu za dvacet minut.“</blockquote>
+      <button class="btn btn-white" id="quote-btn">Další hláška</button>
+    </div>
+  </section>
+
+  <section class="contact" id="kontakt">
+    <h2>Něco teče, netopí nebo nesvítí?</h2>
+    <p>Zavolejte. Pokud nezvedám, jsem pod kotlem nebo na Woltu.</p>
+    <div class="actions center">
+      <a class="btn btn-main" href="tel:+420777000000">777 000 000</a>
+      <a class="btn btn-ghost" href="mailto:kotlik@example.cz">kotlik@example.cz</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>© <span id="year"></span> Kotlik. Kotle, záchody, elektro. Oktávka je v ceně opravy morální podpory.</p>
+</footer>
+
 <script src="script.js"></script>
 </body>
 </html>
