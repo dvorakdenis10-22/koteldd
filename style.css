@@ -132,3 +132,28 @@ footer{background:var(--teal);color:#cfe0e3;text-align:center;padding:1.6rem 1re
   *{animation:none!important;transition:none!important}
   html{scroll-behavior:auto}
 }
+
+/* minihra */
+.game{max-width:1300px;margin:auto}
+.game-box{position:relative;max-width:960px}
+#game{display:block;width:100%;height:auto;border:3px solid var(--teal);border-radius:var(--radius);box-shadow:8px 8px 0 var(--teal);background:#9fd0e8;touch-action:none}
+.g-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;
+  text-align:center;padding:1.5rem;background:rgba(14,59,67,.84);color:#fff;border-radius:var(--radius)}
+.g-overlay.hide{display:none}
+.g-overlay h3{color:var(--hazard);font-size:clamp(1.6rem,4vw,2.4rem)}
+.g-overlay p{max-width:30rem}
+.g-skins{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center}
+.g-skins button{padding:.45rem 1rem;border-radius:999px;border:2px solid #fff;background:transparent;color:#fff;font:600 1rem Barlow,sans-serif;cursor:pointer}
+.g-skins button.on{background:#fff;color:var(--teal)}
+.g-pad{display:flex;gap:.8rem;margin-top:1rem}
+.g-pad button{flex:1;padding:1rem;border:3px solid var(--teal);border-radius:14px;background:#fff;color:var(--teal);
+  font:600 1.1rem Barlow,sans-serif;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none}
+.g-pad button:active{background:var(--hazard)}
+.g-overlay.g-win{justify-content:flex-start;background:linear-gradient(rgba(14,59,67,.94) 45%,rgba(14,59,67,0))}
+@media (max-width:600px){
+  .g-overlay{gap:.4rem;padding:.6rem}
+  .g-overlay h3{font-size:1.2rem}
+  .g-overlay p{font-size:.8rem;line-height:1.3}
+  .g-skins button{padding:.25rem .6rem;font-size:.8rem}
+  .g-overlay .btn{padding:.4rem 1rem;font-size:.9rem}
+}
