@@ -175,3 +175,7 @@ footer{background:#111315;color:var(--muted);text-align:center;padding:1.6rem 1r
   .g-hud{top:6px;left:6px;right:6px;gap:5px}.h-fuel{min-width:0}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+.g-hud>.h-blink{font-size:2em;line-height:1;color:#4a4f54;display:flex;align-items:center;padding:.2em .5em}
+.g-hud>.h-blink.on{color:#ff9a1a;text-shadow:0 0 12px #ff7a00;animation:blinkL .66s steps(1) infinite}
+@keyframes blinkL{50%{opacity:.15}}
+.g-pad button{font-size:clamp(.8rem,2.2vw,1.1rem);padding:.9rem .4rem}
