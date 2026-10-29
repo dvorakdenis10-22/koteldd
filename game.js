@@ -424,23 +424,8 @@ c+=(fract(sin(dot(vUv*vec2(960.,540.)+time,vec2(12.9898,78.233)))*43758.5453)-.5
     s.material.color.set(rust ? 0x9a4a22 : 0x77797c); s.userData.life = 1; s.userData.vy = rust ? -.4 : .9; s.scale.setScalar(.3);
   }
 
-  /* ---------- zvuk (WebAudio): motor, blinkr, klakson ---------- */
-  let au = null, muted = false;
-  function audioInit() {
-    if (au) return; const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-    try { const c = new AC(), o1 = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain(); o1.type = 'sawtooth'; o2.type = 'square'; f.type = 'lowpass'; f.frequency.value = 400; g.gain.value = 0; o1.connect(f); o2.connect(f); f.connect(g); g.connect(c.destination); o1.start(); o2.start(); au = { c, o1, o2, f, g }; } catch (e) { }
-  }
-  function tone(fr, dur, type = 'square', vol = .07, fr2) {
-    if (!au || muted) return; const c = au.c, o = c.createOscillator(), g = c.createGain(); o.type = type; o.frequency.value = fr; if (fr2) o.frequency.linearRampToValueAtTime(fr2, c.currentTime + dur);
-    g.gain.setValueAtTime(vol, c.currentTime); g.gain.exponentialRampToValueAtTime(.001, c.currentTime + dur); o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + dur + .05);
-  }
-  function audioStep() {
-    if (!au) return; const sp = Math.abs(st.v), live = st.mode === 'drive' && !muted, fr = 34 + sp * 3.1 + keys.gas * 14;
-    au.o1.frequency.value = fr; au.o2.frequency.value = fr * .5; au.f.frequency.value = 260 + sp * 22 + keys.gas * 220; au.g.gain.value = live ? .045 + keys.gas * .035 : 0;
-  }
-
   /* ---------- stav hry ---------- */
-  const keys = { gas: 0, brake: 0, left: 0, right: 0, tap: 0, horn: 0 }; let st, skin = 'classic', last = 0, vis = true, camMode = 0, frame = 0;
+  const keys = { gas: 0, brake: 0, left: 0, right: 0, tap: 0 }; let st, skin = 'classic', last = 0, vis = true, camMode = 0, frame = 0;
   const look = new T.Vector3(), cpos = new T.Vector3(); let camInit = false;
   function reset() {
     const p = pathAt(0), r = [-p.tz, p.tx];
@@ -448,7 +433,7 @@ c+=(fract(sin(dot(vUv*vec2(960.,540.)+time,vec2(12.9898,78.233)))*43758.5453)-.5
     npcs.forEach(n => { n.on = false; n.c.car.visible = false; });
     setNight(0); $('g-sleep').classList.remove('on'); camInit = false; applySkin(skin);
   }
-  function end(title, text) { st.mode = 'over'; st.v = 0; if (/Bouračka|Šrám/.test(title)) tone(90, .5, 'sawtooth', .2, 40); say(title, text, 'Zkusit znovu'); }
+  function end(title, text) { st.mode = 'over'; st.v = 0; say(title, text, 'Zkusit znovu'); }
   function tip(s, t) { st.tip = s; st.tipT = t; }
   function spawn(lane) {
     const n = npcs.find(q => !q.on && q.lane === lane); if (!n) return;
@@ -461,7 +446,6 @@ c+=(fract(sin(dot(vUv*vec2(960.,540.)+time,vec2(12.9898,78.233)))*43758.5453)-.5
     st.t += dt; skyU.time.value = st.t; if (st.tipT > 0) st.tipT -= dt; if (st.bumpT > 0) st.bumpT -= dt;
     const fx = -Math.sin(st.psi), fz = -Math.cos(st.psi);
     const slope = (ground(st.x + fx * 2.3, st.z + fz * 2.3) - ground(st.x - fx * 2.3, st.z - fz * 2.3)) / 4.6;
-    if (keys.horn) { keys.horn = 0; tone(420, .35, 'square', .08); tone(530, .35, 'square', .06); }
     if (st.mode === 'drive') {
       st.time += dt; const gas = keys.gas;
       if (keys.tap) { st.blink = !st.blink; keys.tap = 0; }
@@ -490,7 +474,7 @@ c+=(fract(sin(dot(vUv*vec2(960.,540.)+time,vec2(12.9898,78.233)))*43758.5453)-.5
       }
       if ((dRoad(st.x, st.z) > 45 && dStat(st.x, st.z) > 3) || st.z > ZB + 90) end('Sjel jsi z cesty', 'Oktávka ráda jezdí po silnici. Zkus to znovu a drž se asfaltu.');
       const me = circ(st.x, st.z, st.psi);
-      for (const p of parked) { const h = hit(me, p.circ); if (h) { const l = Math.hypot(h[0], h[1]) || 1, push = 1.95 - l; st.x += h[0] / l * push; st.z += h[1] / l * push; st.v = 0; if (st.bumpT <= 0) { st.penalty += 3; st.bumpT = 1.5; tip('Šrám o zaparkované auto! +3 s.', 2.5); tone(140, .25, 'sawtooth', .1); } } }
+      for (const p of parked) { const h = hit(me, p.circ); if (h) { const l = Math.hypot(h[0], h[1]) || 1, push = 1.95 - l; st.x += h[0] / l * push; st.z += h[1] / l * push; st.v = 0; if (st.bumpT <= 0) { st.penalty += 3; st.bumpT = 1.5; tip('Šrám o zaparkované auto! +3 s.', 2.5); } } }
     } else if (st.mode === 'sleep') {
       st.sleep = Math.min(1, st.sleep + dt / 4); st.sleepT += dt; st.v = 0; setNight(sm(0, 1, st.sleep)); $('g-sleep').classList.toggle('on', st.sleep > .4);
       if (st.sleepT > 8 && !st.done) {
@@ -520,7 +504,7 @@ c+=(fract(sin(dot(vUv*vec2(960.,540.)+time,vec2(12.9898,78.233)))*43758.5453)-.5
     rig.position.y = bob; rig.rotation.z = -st.steer * st.v * .0035;
     wheels.forEach(w => { w.g.rotation.z = -st.wheel; w.g.rotation.y = w.front ? st.delta : 0; });
     tail.emissiveIntensity = keys.brake && st.v > .5 ? 2.6 : .35;
-    const on = st.blink && Math.floor(st.t * 3) % 2 === 0; if (on !== st.blinkOn) { st.blinkOn = on; if (on) tone(1900, .03, 'square', .03); }
+    const on = st.blink && Math.floor(st.t * 3) % 2 === 0; st.blinkOn = on;
     indL.emissiveIntensity = indR.emissiveIntensity = on ? 3 : 0;
     // kamera
     const cy = car.position.y, f = new T.Vector3(fx, 0, fz), want = new T.Vector3(), tgt = new T.Vector3();
@@ -538,19 +522,22 @@ c+=(fract(sin(dot(vUv*vec2(960.,540.)+time,vec2(12.9898,78.233)))*43758.5453)-.5
     sun.target.position.copy(car.position); sun.position.copy(car.position).addScaledVector(SUN, 90);
     moonL.position.copy(car.position).add(skyU.moon.value.clone().multiplyScalar(90)); moonL.target.position.copy(car.position); moonL.target.updateMatrixWorld();
     sky.position.copy(camera.position);
-    audioStep(); hud(); if (++frame % 3 === 0) drawMap();
+    hud(); if (++frame % 3 === 0) drawMap();
   }
 
   /* ---------- HUD a minimapa ---------- */
   const hSpd = $('h-spd'), hFuel = $('h-fuel'), hFuelT = $('h-fuelt'), hProg = $('h-prog'), hTip = $('h-tip'), hBlink = $('h-blink');
-  const mm = $('g-map'), mc = mm && mm.getContext && mm.getContext('2d'), MS = .3, mx = x => (x + 40) * MS, my = z => (z - (ZB - 540)) * MS;
-  function drawMap() {
-    if (!mc) return; mc.clearRect(0, 0, 160, 180); mc.fillStyle = 'rgba(16,18,20,.8)'; mc.fillRect(0, 0, 160, 180);
-    mc.lineJoin = 'round'; mc.lineWidth = 3; mc.strokeStyle = '#8c9298'; mc.beginPath(); pathA.forEach((p, i) => i ? mc.lineTo(mx(p[0]), my(p[2])) : mc.moveTo(mx(p[0]), my(p[2]))); mc.stroke();
-    mc.beginPath(); mc.moveTo(mx(-40), my(ZB)); mc.lineTo(mx(480), my(ZB)); mc.stroke();
-    mc.fillStyle = '#3d6fb8'; mc.fillRect(mx(SX - 58), my(ZB - 48), 110 * MS, 31 * MS); mc.fillStyle = '#6ff09a'; mc.fillRect(mx(BX) - 2, my(BZ) - 2, 4, 4);
-    mc.fillStyle = '#e8574a'; npcs.forEach(n => { if (n.on) mc.fillRect(mx(n.x) - 1.5, my(n.z) - 1.5, 3, 3); });
-    mc.save(); mc.translate(mx(st.x), my(st.z)); mc.rotate(-st.psi); mc.fillStyle = '#ffd21f'; mc.beginPath(); mc.moveTo(0, -6); mc.lineTo(4, 5); mc.lineTo(-4, 5); mc.closePath(); mc.fill(); mc.restore();
+  const mm = $('g-map'), mc = mm && mm.getContext && mm.getContext('2d'), MS = .34;
+  function drawMap() {   // mapa se otáčí podle auta: tvůj směr jízdy je vždy nahoru
+    if (!mc) return; mc.save(); mc.clearRect(0, 0, 160, 180); mc.fillStyle = 'rgba(16,18,20,.8)'; mc.fillRect(0, 0, 160, 180); mc.beginPath(); mc.rect(0, 0, 160, 180); mc.clip();
+    mc.translate(80, 128); mc.rotate(st.psi); mc.scale(MS, MS); mc.translate(-st.x, -st.z);
+    mc.lineJoin = 'round'; mc.lineWidth = 9; mc.strokeStyle = '#8c9298';
+    mc.beginPath(); pathA.forEach((p, i) => i ? mc.lineTo(p[0], p[2]) : mc.moveTo(p[0], p[2])); mc.stroke();
+    mc.beginPath(); mc.moveTo(-60, ZB); mc.lineTo(520, ZB); mc.moveTo(0, ZB); mc.lineTo(-12, ZB + 75); mc.stroke();
+    mc.fillStyle = '#3d6fb8'; mc.fillRect(SX - 58, ZB - 48, 110, 31); mc.fillStyle = '#6ff09a'; mc.fillRect(BX - 5, BZ - 5, 10, 10);
+    mc.fillStyle = '#e8574a'; npcs.forEach(n => { if (n.on) mc.fillRect(n.x - 4, n.z - 4, 8, 8); });
+    mc.restore();
+    mc.fillStyle = '#ffd21f'; mc.beginPath(); mc.moveTo(80, 118); mc.lineTo(86, 135); mc.lineTo(74, 135); mc.closePath(); mc.fill();
   }
   function hud() {
     hSpd.textContent = Math.round(Math.abs(st.v) * 3.6); hFuel.style.width = (st.fuel > 0 ? st.fuel / 6 * 100 : 100) + '%'; hFuel.classList.toggle('rust', st.fuel <= 0);
@@ -559,7 +546,7 @@ c+=(fract(sin(dot(vUv*vec2(960.,540.)+time,vec2(12.9898,78.233)))*43758.5453)-.5
     let s = '';
     if (st.mode === 'drive') {
       if (st.tipT > 0) s = st.tip;
-      else if (st.time < 6) s = 'W plyn, S brzda a zpátečka, A/D zatáčení, mezerník blinkr, H klakson, C kamera';
+      else if (st.time < 6) s = 'W plyn, S brzda a zpátečka, A/D zatáčení, mezerník blinkr, C kamera';
       else if (!st.B && st.s > LA - 230 && st.s < LA - 60 && !st.blink) s = 'Křižovatka. Zpomal (S), zapni blinkr (mezerník) a zatoč vlevo (A) na státovku.';
       else if (st.B && st.x > SX - 190 && st.x < SX + 80 && st.z > ZB - 8) s = 'KM Prona vlevo. Zařaď se do prostředního pruhu, dej přednost protijedoucím a odboč vlevo vjezdem.';
       else if (st.B && onApron(st.x, st.z)) s = 'Zajeď do zeleného pole u značky P. Zpátečka: drž S.';
@@ -573,24 +560,33 @@ c+=(fract(sin(dot(vUv*vec2(960.,540.)+time,vec2(12.9898,78.233)))*43758.5453)-.5
     if (st.mode !== 'drive') return;
     if (map[e.code]) { keys[map[e.code]] = 1; e.preventDefault(); }
     if (e.code === 'Space') { if (!e.repeat) keys.tap = 1; e.preventDefault(); }
-    if (e.code === 'KeyH' && !e.repeat) keys.horn = 1;
     if (e.code === 'KeyC' && !e.repeat) camMode = 1 - camMode;
-    if (e.code === 'KeyM' && !e.repeat) { muted = !muted; const b = $('g-snd'); if (b) b.textContent = 'Zvuk: ' + (muted ? 'vyp' : 'zap'); }
   });
   addEventListener('keyup', e => { if (map[e.code]) keys[map[e.code]] = 0; });
   document.querySelectorAll('.g-pad button').forEach(b => {
     const k = b.dataset.k;
     b.addEventListener('pointerdown', e => { e.preventDefault(); keys[k] = 1; });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, () => { if (k !== 'tap' && k !== 'horn') keys[k] = 0; }));
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, () => { if (k !== 'tap') keys[k] = 0; }));
   });
-  const sel = (cls, fn) => document.querySelectorAll(cls + ' button').forEach(b => b.addEventListener('click', () => { fn(b); document.querySelectorAll(cls + ' button').forEach(x => x.classList.toggle('on', x === b)); }));
-  sel('.g-sk', b => { skin = b.dataset.skin; applySkin(skin); });
-  sel('.g-mo', b => { mood = b.dataset.mood; setNight(0); });
-  const bFx = $('g-fx'), bSn = $('g-snd');
-  if (bFx) bFx.addEventListener('click', () => { setFx(!fxOn); bFx.textContent = 'Efekty: ' + (fxOn && composer ? 'zap' : 'vyp'); bFx.classList.toggle('on', fxOn && !!composer); });
-  if (bFx && !composer) { bFx.textContent = 'Efekty: nedostupné'; bFx.classList.remove('on'); }
-  if (bSn) bSn.addEventListener('click', () => { muted = !muted; bSn.textContent = 'Zvuk: ' + (muted ? 'vyp' : 'zap'); bSn.classList.toggle('on', !muted); });
-  $('g-start').addEventListener('click', () => { audioInit(); if (au && au.c.state === 'suspended') au.c.resume(); reset(); st.mode = 'drive'; $('g-ov').classList.add('hide'); $('g-start').blur(); });
+  // volby v úvodní nabídce: tři nezávislé skupiny (auto, čas, nastavení); vzhled tlačítek se vždy překreslí ze stavu
+  const bFx = $('g-fx');
+  function refreshOpts() {
+    document.querySelectorAll('.g-sk button').forEach(b => b.classList.toggle('on', b.dataset.skin === skin));
+    document.querySelectorAll('.g-mo button').forEach(b => b.classList.toggle('on', b.dataset.mood === mood));
+    if (bFx) { bFx.textContent = 'Efekty: ' + (composer ? (fxOn ? 'zap' : 'vyp') : 'nedostupné'); bFx.classList.toggle('on', !!composer && fxOn); }
+    try { localStorage.setItem('kotlikOpts', JSON.stringify({ skin, mood, fx: fxOn })); } catch (e) { }
+  }
+  $('g-ov').addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('button'); if (!b) return;
+    if (b.dataset.skin) { skin = b.dataset.skin; applySkin(skin); }
+    else if (b.dataset.mood) { mood = b.dataset.mood; setNight(0); }
+    else if (b.id === 'g-fx') { if (composer) setFx(!fxOn); }
+    else return;
+    refreshOpts();
+  });
+  try { const o = JSON.parse(localStorage.getItem('kotlikOpts') || 'null'); if (o) { if (o.skin) skin = o.skin; if (MOODS[o.mood]) mood = o.mood; if (composer) setFx(o.fx !== false); } } catch (e) { }
+  refreshOpts();
+  $('g-start').addEventListener('click', () => { reset(); st.mode = 'drive'; $('g-ov').classList.add('hide'); $('g-start').blur(); });
   new IntersectionObserver(e => vis = e[0].isIntersecting).observe(cv);
 
   function loop(ts) {
