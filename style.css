@@ -185,74 +185,6 @@ footer{background:#111315;color:var(--muted);text-align:center;padding:1.6rem 1r
 .g-optrow>span{min-width:6rem;text-align:right;color:var(--muted);font-weight:600;text-transform:uppercase;font-size:.8rem;letter-spacing:.06em}
 @media (max-width:600px){.g-optrow>span{display:none}.g-optrow{gap:.3rem}}
 
-/* ===================== GRAND THEFT KOTLIK: intro ===================== */
-.gi{position:absolute;inset:0;z-index:20;background:#000;overflow:hidden;color:#fff;border-radius:var(--radius);font-size:clamp(8px,1.5vw,14.4px);transition:opacity .9s,visibility .9s}
-.gi.out{opacity:0;visibility:hidden;pointer-events:none}
-.gi-scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .7s;z-index:2}
-.gi-scene.on{opacity:1;visibility:visible}
-.gi-skip{position:absolute;top:1em;right:1em;z-index:6;background:rgba(0,0,0,.5);border:1px solid #888;color:#ddd;padding:.4em 1em;border-radius:999px;font:600 1.1em Barlow,sans-serif;cursor:pointer}
-.gi-skip:hover{color:var(--bulb);border-color:var(--bulb)}
-
-/* scéna 1: Kotlik Games uvádí */
-.gi-pres{text-align:center}
-.gi-pres small{display:block;font:400 1.4em 'Archivo Black';letter-spacing:.5em;color:#888}
-.gi-pres b{display:block;margin-top:.8em;font:400 2.6em 'Archivo Black';letter-spacing:.1em;min-height:1.2em}
-.gi-pres b::after{content:"▌";animation:gicur .7s steps(1) infinite;color:var(--bulb)}
-@keyframes gicur{50%{opacity:0}}
-
-/* scéna 2: komiksové panely */
-.gi-panels{display:flex;gap:.8em;width:104%;height:78%;transform:skewX(-6deg)}
-.gi-p{position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:1.2em;background-size:cover;background-position:center;border:.35em solid #fff;
-  opacity:0;transform:translateY(60%) scale(1.1);animation:gipanel .7s cubic-bezier(.2,.9,.3,1) forwards;animation-delay:calc(var(--i)*.55s + .2s);box-shadow:0 1em 3em rgba(0,0,0,.7)}
-.gi-p::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.35) 1.2px,transparent 1.6px) 0 0/9px 9px;mix-blend-mode:multiply}
-.gi-p::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(0,0,0,.75))}
-.gi-p span{position:relative;z-index:1;transform:skewX(6deg);font:400 2.6em 'Archivo Black';line-height:1;text-shadow:.07em .07em 0 #000}
-.gi-p em{position:relative;z-index:1;transform:skewX(6deg);font:600 1.15em Barlow;font-style:normal;margin-top:.4em;background:#000;padding:.2em .5em;align-self:flex-start}
-.p1{background-image:linear-gradient(160deg,#e0733a,#5a1e0c)}
-.p2{background-image:linear-gradient(160deg,#19a7e0,#05283f)}
-.p3{background-image:repeating-linear-gradient(-45deg,#ffd21f 0 22px,#15171a 22px 44px)}
-.p3 span{color:#ffd21f;background:#000;padding:0 .2em}
-.p4{background-image:linear-gradient(160deg,#444,#111)}
-@keyframes gipanel{to{opacity:1;transform:none}}
-
-/* scéna 3: titulek */
-.gi-bg{position:absolute;inset:0;opacity:0;transition:opacity 1.2s;background:linear-gradient(#240a45 0,#7a1b6b 38%,#ff3d81 60%,#ffb347 78%)}
-.gi.t .gi-bg{opacity:1}
-.gi-sun{position:absolute;left:50%;top:38%;width:36%;aspect-ratio:1;transform:translate(-50%,-30%);border-radius:50%;
-  background:linear-gradient(#fff2a8,#ff9a3c 55%,#ff3d81);box-shadow:0 0 6em 1em rgba(255,120,80,.6);
-  -webkit-mask:linear-gradient(#000 0 55%,transparent 55% 58%,#000 58% 70%,transparent 70% 74%,#000 74% 86%,transparent 86% 91%,#000 91%);
-  mask:linear-gradient(#000 0 55%,transparent 55% 58%,#000 58% 70%,transparent 70% 74%,#000 74% 86%,transparent 86% 91%,#000 91%)}
-.gi-hills{position:absolute;left:0;right:0;bottom:12%;width:100%;height:30%}
-.gi-road{position:absolute;left:0;right:0;bottom:0;height:12%;background:#120622;border-top:.3em solid #ff4fa3;overflow:hidden}
-.gi-road::after{content:"";position:absolute;left:0;right:-6em;top:46%;height:.4em;background:repeating-linear-gradient(90deg,#ffd21f 0 3em,transparent 3em 6em);animation:giroad .5s linear infinite}
-@keyframes giroad{to{transform:translateX(-6em)}}
-.gi-car{position:absolute;bottom:4.5%;width:22%;left:-25%;animation:gicar 7s cubic-bezier(.4,0,.6,1) 1s infinite;filter:drop-shadow(0 0 .8em #ff4fa3)}
-@keyframes gicar{0%{left:-25%}100%{left:110%}}
-
-.gi-logo{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;transform:translateY(-6%)}
-.gi-logo small{font:600 1.2em Barlow;letter-spacing:.5em;color:#ffe3f1;opacity:0;animation:gifade 1s .4s forwards}
-.gi-logo h4{font:400 3.2em 'Archivo Black';font-style:italic;letter-spacing:.12em;color:#fff;-webkit-text-stroke:.05em #000;text-shadow:.06em .06em 0 #000;opacity:0;transform:translateX(-120%);animation:giin .8s .7s cubic-bezier(.2,1,.3,1) forwards}
-.gi-logo h5{font:400 11em 'Archivo Black';line-height:.9;letter-spacing:-.01em;background:linear-gradient(#fff 0,#ffd0e6 35%,#ff4fa3 60%,#ff9a3c);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(.04em .04em 0 #000) drop-shadow(0 0 .3em rgba(255,79,163,.6));opacity:0;transform:scale(2.4);animation:gislam .7s 1.3s cubic-bezier(.2,1.4,.4,1) forwards}
-.gi-ribbon{margin-top:.5em;padding:.25em 1.6em;background:var(--hazard);color:#15171a;font:400 1.6em 'Archivo Black';letter-spacing:.18em;transform:skewX(-12deg) scaleX(0);animation:giribbon .5s 2.1s forwards}
-.gi-load,.gi-play{margin-top:1.6em;opacity:0;animation:gifade .6s 2.5s forwards}
-.gi-load span{display:block;font:600 1.15em Barlow;color:#ffe3f1;margin-bottom:.4em}
-.gi-bar{width:26em;max-width:80vw;height:.7em;margin:0 auto;background:rgba(0,0,0,.55);border:.12em solid #fff;border-radius:99px;overflow:hidden}
-.gi-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff4fa3,#ffd21f)}
-.gi-load.hide{display:none}
-.gi-play{display:none;flex-direction:column;align-items:center;gap:.7em}
-.gi-play.on{display:flex;opacity:1;animation:gifade .5s forwards}
-.gi-play .btn{font-size:1.5em}
-.gi-play .btn-main{animation:giplay 1.2s infinite}
-.gi-play p{font:600 1em Barlow;color:#ffe3f1;opacity:.8}
-.gi-rating{position:absolute;bottom:-9em;font:600 .85em Barlow;letter-spacing:.12em;color:#ffd0e6;opacity:.7;white-space:nowrap}
-@keyframes gifade{to{opacity:1}}
-@keyframes giin{to{opacity:1;transform:none}}
-@keyframes gislam{to{opacity:1;transform:none}}
-@keyframes giribbon{to{transform:skewX(-12deg) scaleX(1)}}
-@keyframes giplay{50%{box-shadow:0 0 0 .6em rgba(255,210,31,.25),0 0 2.5em rgba(255,210,31,.7)}}
-@media (max-width:600px){.gi-rating{display:none}.gi-bar{width:18em}}
-
 /* tlačítko celé obrazovky */
 .g-fs{position:absolute;left:12px;bottom:12px;z-index:30;width:2.6em;height:2.6em;border-radius:10px;border:1px solid var(--line);background:rgba(16,18,20,.8);color:var(--text);font-size:1.1rem;cursor:pointer}
 .g-fs:hover{color:var(--bulb);border-color:var(--bulb)}
@@ -266,30 +198,148 @@ footer{background:#111315;color:var(--muted);text-align:center;padding:1.6rem 1r
 .game-box.pfs #g-map{bottom:auto;top:70px}
 @media (hover:hover) and (pointer:fine){.game-box.pfs .g-pad{display:none}}
 
-/* ===== PlayStation-like výběr hry ===== */
-.gi-skip{display:none}.gi.run .gi-skip{display:block}
-.gi-xmb{position:absolute;inset:0;overflow:hidden;background:#001433;font-family:Barlow,sans-serif}
-.gi-wave{position:absolute;inset:0;background:linear-gradient(160deg,#001a45,#0b4fa8 60%,#2a86d8)}
-.gi-wave::before,.gi-wave::after{content:"";position:absolute;left:-30%;width:160%;height:60%;border-radius:45%;background:linear-gradient(rgba(255,255,255,.16),rgba(255,255,255,0));animation:giwave 14s linear infinite}
-.gi-wave::before{top:50%}
-.gi-wave::after{top:62%;animation-duration:22s;animation-direction:reverse;opacity:.7}
-@keyframes giwave{to{transform:rotate(360deg)}}
-.gi-xtop{position:absolute;top:1.2em;left:2em;right:2em;display:flex;justify-content:space-between;font:600 1.3em Barlow;color:#d6e8ff;text-shadow:0 .1em .4em rgba(0,0,0,.5)}
-.gi-xcat{position:absolute;top:16%;left:0;right:0;text-align:center;font:400 1.7em 'Archivo Black';letter-spacing:.2em;text-transform:uppercase;color:#fff;text-shadow:0 .1em .5em rgba(0,0,0,.5)}
-.gi-tiles{position:absolute;left:0;right:0;top:30%;display:flex;gap:3.4em;justify-content:center;align-items:center}
-.gi-tile{position:relative;width:10em;aspect-ratio:1;border:0;border-radius:.9em;color:#fff;cursor:pointer;overflow:hidden;opacity:.55;transform:scale(.85);transition:transform .3s,opacity .3s,box-shadow .3s;font-family:inherit}
-.gi-tile.sel{opacity:1;transform:scale(1.4);box-shadow:0 0 0 .18em #fff,0 0 3em rgba(150,205,255,.95);animation:gisel 2s ease-in-out infinite}
-@keyframes gisel{50%{box-shadow:0 0 0 .18em #fff,0 0 4.5em rgba(150,205,255,.6)}}
-.gi-tile b{position:absolute;left:.5em;right:.5em;bottom:.5em;font:400 .85em 'Archivo Black';text-align:left;line-height:1.1;text-shadow:.07em .07em 0 #000}
-.gi-tile i{position:absolute;left:0;right:0;top:18%;font:400 3.6em 'Archivo Black';font-style:normal;letter-spacing:.02em;background:linear-gradient(#fff,#ff4fa3 60%,#ff9a3c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(.05em .05em 0 #000)}
-.t1{background:linear-gradient(160deg,#e0733a,#5a1e0c)}
-.t2{background:linear-gradient(#240a45 0,#7a1b6b 40%,#ff3d81 68%,#ffb347)}
-.t3{background:linear-gradient(160deg,#19a7e0,#05283f)}
-.gi-xinfo{position:absolute;left:0;right:0;bottom:8%;display:flex;flex-direction:column;align-items:center;gap:.5em;text-align:center}
-.gi-xinfo h6{font:400 2em 'Archivo Black';color:#fff;text-shadow:0 .1em .4em rgba(0,0,0,.6)}
-.gi-xinfo p{font:500 1.15em Barlow;color:#d6e8ff;max-width:30em}
-.gi-xinfo .btn{font-size:1.4em;margin-top:.3em;animation:giplay 1.2s infinite}
-.gi-xinfo small{font:600 .95em Barlow;color:#9fc4ee;margin-top:.2em}
-.gi-toast{position:absolute;left:50%;bottom:2.5%;transform:translate(-50%,1em);padding:.5em 1.4em;border-radius:99px;background:rgba(0,0,0,.7);border:1px solid #9fc4ee;font:600 1.1em Barlow;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+/* ======================================================================
+   GRAND THEFT KOTLIK: menu jako PlayStation 4 + filmové intro
+   ====================================================================== */
+.gi{--o:linear-gradient(160deg,#e0733a,#5a1e0c);--w:linear-gradient(160deg,#19a7e0,#05283f);
+  position:absolute;inset:0;z-index:20;background:#000;overflow:hidden;color:#fff;border-radius:var(--radius);font-size:clamp(8px,1.5vw,14.4px);transition:opacity .9s,visibility .9s}
+.gi.out{opacity:0;visibility:hidden;pointer-events:none}
+.gi-scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .7s;z-index:2}
+.gi-scene.on{opacity:1;visibility:visible}
+.gi-skip{display:none;position:absolute;top:1em;right:1em;z-index:7;background:rgba(0,0,0,.5);border:1px solid #888;color:#ddd;padding:.4em 1em;border-radius:999px;font:600 1.1em Barlow,sans-serif;cursor:pointer}
+.gi.run .gi-skip{display:block}
+.gi-skip:hover{color:var(--bulb);border-color:var(--bulb)}
+.gi-flash{position:absolute;inset:0;z-index:6;background:#fff;opacity:0;pointer-events:none}
+.gi.launching .gi-flash{animation:giflash 1.1s forwards}
+@keyframes giflash{0%,55%{opacity:0}78%{opacity:.95}100%{opacity:0}}
+
+/* ---------- menu ---------- */
+.gi-xmb{position:absolute;inset:0;overflow:hidden;font-family:Barlow,sans-serif;background:#02050a;transform-origin:50% 50%;
+  transition:transform 1s cubic-bezier(.55,0,.9,.35),opacity .45s .55s}
+.gi.launching .gi-xmb{transform:scale(8);opacity:0}
+.gi-xmb::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 72% 108%,#0d2c47 0,transparent 62%),linear-gradient(#0f141b,#020407 80%)}
+.gi-dots{position:absolute;inset:0;width:100%;height:100%}
+.gi-xtop{position:absolute;top:.6em;left:2.4em;right:2.4em;display:flex;align-items:center;justify-content:space-between;font:500 1.15em Barlow;color:#c9d4e0;white-space:nowrap}
+.gi-xtop .gi-news{display:flex;align-items:center;gap:.6em;overflow:hidden}
+.gi-xtop .gi-plus{color:#f2c230;font-size:1.5em;line-height:1}
+.gi-xtop .gi-user{display:flex;align-items:center;gap:.6em}
+.gi-xtop .gi-av{width:2.2em;height:2.2em;background:var(--o) center/cover,#555;border:.1em solid #fff}
+.gi-xtop .gi-clock{font-size:1.2em;color:#fff}
+.gi-row{position:absolute;top:14%;left:11%;display:flex;align-items:flex-start;gap:.3em;transition:transform .35s cubic-bezier(.25,.8,.25,1)}
+.gi-tile{flex:none;position:relative;width:7.2em;height:7.2em;border:0;padding:0;overflow:hidden;cursor:pointer;color:#fff;font:inherit;background:#0a3d8f;
+  transition:width .3s,height .3s,box-shadow .3s}
+.gi-tile.sel{width:12em;height:12em;box-shadow:0 0 0 .2em rgba(255,255,255,.9)}
+.gi-tile:focus-visible{outline:none}
+.gi-lab{position:absolute;left:0;right:0;bottom:0;height:0;overflow:hidden;background:rgba(38,42,46,.96);text-align:center;font:500 1.15em/2.1em Barlow;transition:height .25s}
+.gi-tile.sel .gi-lab{height:2.1em}
+.gi-nm{position:absolute;left:0;right:0;bottom:.7em;text-align:center;font:500 1.1em Barlow}
+.gi-tile.sel .gi-nm{display:none}
+.gi-ph{position:absolute;inset:0 0 2.1em 0;background:var(--o) center/cover,#222;transition:inset .25s}
+.gi-tile:not(.sel) .gi-ph{inset:0}
+.gi-badge{position:absolute;left:.6em;top:.6em;font:400 .8em 'Archivo Black';letter-spacing:.06em;padding:.25em .6em;background:rgba(0,0,0,.55);border-radius:.2em;text-shadow:0 .1em .2em #000}
+.gi-tile:not(.sel) .gi-badge{display:none}
+.t-sym{background:linear-gradient(145deg,#4a4d52,#26292d);box-shadow:inset 0 0 0 .12em #707479}
+.t-sym.sel{box-shadow:0 0 0 .2em rgba(255,255,255,.9)}
+.gi-glyph{position:absolute;inset:18%;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;place-items:center;font-style:normal}
+.gi-glyph i{font:400 2.4em/1 Barlow;font-style:normal;color:#fff}
+.t-fold1,.t-fold2,.t-fold3{background:linear-gradient(#0a3d8f,#062b6b)}
+.gi-col{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:.12em}
+.gi-col i{display:block;background:#0a2a5c center/cover}
+.gi-col .c1{background-image:var(--o)}.gi-col .c2{background-image:var(--w)}
+.gi-col .c3{background-image:linear-gradient(160deg,#2d6a3e,#0d2a18)}.gi-col .c4{background-image:linear-gradient(160deg,#e0b13a,#7a4b0c)}
+.t-fold2 .c1{background-image:var(--w)}.t-fold2 .c2{background-image:var(--o)}.t-fold2 .c3{background-image:linear-gradient(160deg,#444,#111)}.t-fold2 .c4{background-image:linear-gradient(160deg,#ff4fa3,#5a1060)}
+.gi-fold{position:absolute;right:.5em;bottom:.5em;width:1.9em;height:1.35em;background:#fff;border-radius:.15em}
+.gi-fold::before{content:"";position:absolute;left:0;top:-.3em;width:.85em;height:.4em;background:#fff;border-radius:.15em .15em 0 0}
+.t-fold3{background:linear-gradient(160deg,#0f4a9f,#062b6b)}
+.t-fold3 .gi-fold{right:50%;bottom:50%;margin:0 -.95em -.7em 0;transform:scale(1.7)}
+.t-tv{background:linear-gradient(#0d4aa6,#06306f)}
+.gi-tv{position:absolute;left:14%;right:14%;top:26%;height:36%;border:.28em solid #fff}
+.t-wolt{background:linear-gradient(rgba(0,130,200,.45),rgba(0,60,120,.8)),var(--w) center/cover,#00a2e8}
+.gi-wt{position:absolute;left:0;right:0;top:30%;text-align:center;font:italic 700 2em Barlow;text-shadow:0 .08em .3em rgba(0,0,0,.5)}
+.gi-arr{position:absolute;top:36%;font:200 4em/1 Barlow;color:#e8eef5;pointer-events:none;transition:opacity .2s}
+.gi-arr.r{right:2%}.gi-arr.l{left:1.5%;opacity:0}
+.gi-xtitle{position:absolute;left:calc(11% + 12.7em);top:calc(14% + 8.2em);font:400 3em/1.1 Barlow;color:#fff;letter-spacing:.01em;text-shadow:0 .05em .3em rgba(0,0,0,.6)}
+.gi-xsub{position:absolute;left:calc(11% + 12.8em);top:calc(14% + 12em);max-width:26em;font:400 1.2em/1.4 Barlow;color:#aebdce}
+.gi-xhint{position:absolute;left:0;right:0;bottom:12%;display:flex;align-items:center;justify-content:center;gap:.7em;font:400 1.5em Barlow;color:#e9eef4}
+.gi-xhint svg{width:2em;height:2em;fill:none;stroke:#fff;stroke-width:1.6}
+.gi-keys{position:absolute;left:0;right:0;bottom:4%;text-align:center;font:500 1em Barlow;color:#7e90a5}
+.gi-toast{position:absolute;left:50%;top:6%;transform:translate(-50%,-1em);padding:.5em 1.4em;border-radius:99px;background:rgba(0,0,0,.75);border:1px solid #6f8fb3;font:600 1.1em Barlow;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
 .gi-toast.on{opacity:1;transform:translate(-50%,0)}
-@media (max-width:600px){.gi-tiles{gap:2em}.gi-tile:not(.sel){display:none}.gi-xtop{font-size:1em}}
+
+/* ---------- scéna 1: Kotlik Games ---------- */
+.gi-pres{position:relative;text-align:center;overflow:hidden;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 50%,#101820,#000 70%)}
+.gi-pres small{display:block;font:400 1.3em 'Archivo Black';letter-spacing:.5em;color:#8798aa;opacity:0}
+.gi-pres b{display:block;margin-top:.8em;font:400 3.2em 'Archivo Black';letter-spacing:.1em;min-height:1.2em;opacity:0}
+.gi-pres b::after{content:"▌";animation:gicur .7s steps(1) infinite;color:var(--bulb)}
+.gi-pres::after{content:"";position:absolute;top:0;bottom:0;width:30%;left:-40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.35),transparent);transform:skewX(-20deg)}
+.gi-scene.on .gi-pres small{animation:gifade 1s .3s forwards}
+.gi-scene.on .gi-pres b{animation:gitrack 2.6s .5s cubic-bezier(.2,.8,.3,1) forwards}
+.gi-scene.on .gi-pres::after{animation:gisweep 1.6s .9s ease-in-out forwards}
+@keyframes gicur{50%{opacity:0}}
+@keyframes gitrack{from{opacity:0;letter-spacing:.8em}to{opacity:1;letter-spacing:.1em}}
+@keyframes gisweep{to{left:120%}}
+
+/* ---------- scéna 2: komiksové panely s fotkami ---------- */
+.gi-scene[data-s=panels]::before,.gi-scene[data-s=panels]::after{content:"";position:absolute;left:0;right:0;height:0;background:#000;z-index:3}
+.gi-scene[data-s=panels]::before{top:0}.gi-scene[data-s=panels]::after{bottom:0}
+.gi-scene.on[data-s=panels]::before,.gi-scene.on[data-s=panels]::after{animation:gibars .8s forwards}
+@keyframes gibars{to{height:10%}}
+.gi-panels{display:flex;gap:.8em;width:104%;height:80%;transform:skewX(-6deg)}
+.gi-p{position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:1.2em;border:.35em solid #fff;opacity:0;transform:translateY(60%) scale(1.1);box-shadow:0 1em 3em rgba(0,0,0,.7);
+  background-position:center;background-repeat:no-repeat}
+.gi-scene.on .gi-p{animation:gipanel .7s cubic-bezier(.2,.9,.3,1) forwards,gikb 6s linear forwards;animation-delay:calc(var(--i)*.55s + .3s),calc(var(--i)*.55s + .3s)}
+.gi-p::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.35) 1.2px,transparent 1.6px) 0 0/9px 9px;mix-blend-mode:multiply}
+.gi-p::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(0,0,0,.8))}
+.gi-p span{position:relative;z-index:1;transform:skewX(6deg);font:400 2.6em 'Archivo Black';line-height:1;text-shadow:.07em .07em 0 #000}
+.gi-p em{position:relative;z-index:1;transform:skewX(6deg);font:600 1.15em Barlow;font-style:normal;margin-top:.4em;background:#000;padding:.2em .5em;align-self:flex-start}
+.p1{background-image:linear-gradient(160deg,rgba(224,115,58,.3),rgba(90,30,12,.45)),var(--o);background-size:100% 100%,auto 100%}
+.p2{background-image:linear-gradient(160deg,rgba(25,167,224,.3),rgba(5,40,63,.45)),var(--w);background-size:100% 100%,auto 100%}
+.p3{background-image:repeating-linear-gradient(-45deg,#ffd21f 0 22px,#15171a 22px 44px);background-size:auto}
+.p3 span{color:#ffd21f;background:#000;padding:0 .2em}
+.p4{background-image:linear-gradient(160deg,rgba(60,60,60,.4),rgba(10,10,10,.6)),var(--o);background-size:100% 100%,auto 100%;background-position:center,85% center}
+@keyframes gipanel{to{opacity:1;transform:none}}
+@keyframes gikb{from{background-size:100% 100%,auto 100%}to{background-size:100% 100%,auto 135%}}
+.p3{animation-name:gipanel!important}
+.gi-scene.on .p3{animation:gipanel .7s cubic-bezier(.2,.9,.3,1) forwards;animation-delay:calc(var(--i)*.55s + .3s)}
+
+/* ---------- scéna 3: titulek ---------- */
+.gi-bg{position:absolute;inset:0;opacity:0;transition:opacity 1.2s;background:linear-gradient(#240a45 0,#7a1b6b 38%,#ff3d81 60%,#ffb347 78%)}
+.gi.t .gi-bg{opacity:1}
+.gi-sun{position:absolute;left:50%;top:38%;width:36%;aspect-ratio:1;transform:translate(-50%,-30%);border-radius:50%;
+  background:linear-gradient(#fff2a8,#ff9a3c 55%,#ff3d81);box-shadow:0 0 6em 1em rgba(255,120,80,.6);
+  -webkit-mask:linear-gradient(#000 0 55%,transparent 55% 58%,#000 58% 70%,transparent 70% 74%,#000 74% 86%,transparent 86% 91%,#000 91%);
+  mask:linear-gradient(#000 0 55%,transparent 55% 58%,#000 58% 70%,transparent 70% 74%,#000 74% 86%,transparent 86% 91%,#000 91%)}
+.gi-hills{position:absolute;left:0;right:0;bottom:12%;width:100%;height:30%}
+.gi-road{position:absolute;left:0;right:0;bottom:0;height:12%;background:#120622;border-top:.3em solid #ff4fa3;overflow:hidden}
+.gi-road::after{content:"";position:absolute;left:0;right:-6em;top:46%;height:.4em;background:repeating-linear-gradient(90deg,#ffd21f 0 3em,transparent 3em 6em);animation:giroad .5s linear infinite}
+@keyframes giroad{to{transform:translateX(-6em)}}
+.gi-car{position:absolute;bottom:4.5%;width:22%;left:-25%;animation:gicar 7s cubic-bezier(.4,0,.6,1) 1s infinite;filter:drop-shadow(0 0 .8em #ff4fa3)}
+@keyframes gicar{0%{left:-25%}100%{left:110%}}
+.gi-logo{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;transform:translateY(-6%)}
+.gi-logo small{font:600 1.2em Barlow;letter-spacing:.5em;color:#ffe3f1;opacity:0}
+.gi-logo h4{font:400 3.2em 'Archivo Black';font-style:italic;letter-spacing:.12em;color:#fff;-webkit-text-stroke:.05em #000;text-shadow:.06em .06em 0 #000;opacity:0;transform:translateX(-120%)}
+.gi-logo h5{font:400 11em 'Archivo Black';line-height:.9;letter-spacing:-.01em;background:linear-gradient(#fff 0,#ffd0e6 35%,#ff4fa3 60%,#ff9a3c);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(.04em .04em 0 #000) drop-shadow(0 0 .3em rgba(255,79,163,.6));opacity:0;transform:scale(2.4)}
+.gi-ribbon{margin-top:.5em;padding:.25em 1.6em;background:var(--hazard);color:#15171a;font:400 1.6em 'Archivo Black';letter-spacing:.18em;transform:skewX(-12deg) scaleX(0)}
+.gi-load,.gi-play{margin-top:1.6em;opacity:0}
+.gi-scene.on .gi-logo small{animation:gifade 1s .4s forwards}
+.gi-scene.on .gi-logo h4{animation:giin .8s .7s cubic-bezier(.2,1,.3,1) forwards}
+.gi-scene.on .gi-logo h5{animation:gislam .7s 1.3s cubic-bezier(.2,1.4,.4,1) forwards}
+.gi-scene.on .gi-ribbon{animation:giribbon .5s 2.1s forwards}
+.gi-scene.on .gi-load{animation:gifade .6s 2.5s forwards}
+.gi-load span{display:block;font:600 1.15em Barlow;color:#ffe3f1;margin-bottom:.4em}
+.gi-bar{width:26em;max-width:80vw;height:.7em;margin:0 auto;background:rgba(0,0,0,.55);border:.12em solid #fff;border-radius:99px;overflow:hidden}
+.gi-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff4fa3,#ffd21f)}
+.gi-load.hide{display:none}
+.gi-play{display:none;flex-direction:column;align-items:center;gap:.7em}
+.gi-scene.on .gi-play.on{display:flex;opacity:1;animation:gifade .5s forwards}
+.gi-play .btn{font-size:1.5em}
+.gi-play .btn-main{animation:giplay 1.2s infinite}
+.gi-play p{font:600 1em Barlow;color:#ffe3f1;opacity:.8}
+.gi-rating{position:absolute;bottom:-9em;font:600 .85em Barlow;letter-spacing:.12em;color:#ffd0e6;opacity:.7;white-space:nowrap}
+@keyframes gifade{to{opacity:1}}
+@keyframes giin{to{opacity:1;transform:none}}
+@keyframes gislam{to{opacity:1;transform:none}}
+@keyframes giribbon{to{transform:skewX(-12deg) scaleX(1)}}
+@keyframes giplay{50%{box-shadow:0 0 0 .6em rgba(255,210,31,.25),0 0 2.5em rgba(255,210,31,.7)}}
+@media (max-width:600px){.gi-rating{display:none}.gi-bar{width:18em}.gi-xtop .gi-news{display:none}.gi-xsub{display:none}}
