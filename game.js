@@ -1,4 +1,4 @@
-// 3D minihra: Vrbčany → kopec → státovka vlevo → KM Prona → spánek (three.js)
+// 3D minihra: Vrbčany → kopec → státovka → odbočka do KM Prona → parkoviště a spánek (three.js)
 (() => {
   const cv = document.getElementById('game'); if (!cv) return;
   const $ = id => document.getElementById(id), T = window.THREE;
@@ -12,42 +12,51 @@
   if (!T) { say('3D se nenačetlo', 'Hra potřebuje internet kvůli knihovně three.js. Obnov stránku.', 'OK'); return; }
   $('g-sleep-img').src = SLEEP_IMG;
 
-  /* ---------- svět: trasa a terén ---------- */
-  const ZB = -609, R = 9, XS = -380, HP = 30, BAY = ZB + 9.3;
-  const prof = z => HP * sm(150, 450, -z), dprof = z => (prof(z + 1) - prof(z - 1)) / 2;
+  /* ---------- svět: souřadnice podle leteckého snímku ---------- */
+  // sever = -Z, východ = +X. Hlavní silnice (státovka) vede po z = ZB na východ, benzinka je na jejím severním okraji.
+  const ZB = -609, HP = 30, SX = 380, BX = SX - 17.5, BZ = ZB - 21.5;
+  const at = (e, n) => [SX + e, ZB - n];   // e = metry na východ od středu benzinky, n = metry na sever od silnice
+  const prof = z => HP * sm(150, 450, -z);
   const noise = (x, z) => Math.sin(x * .011 + 1.3) * Math.cos(z * .009) * 7 + Math.sin(x * .027 + z * .019) * 3 + Math.sin(z * .041 - x * .013) * 1.6;
-  const dRoad = (x, z) => Math.min(z > ZB ? Math.abs(x) : Math.hypot(x, z - ZB), x < 0 ? Math.abs(z - ZB) : Math.hypot(x, z - ZB));
-  const H = (x, z) => prof(z) + noise(x, z) * sm(9, 70, dRoad(x, z)) * sm(40, 95, Math.hypot(x - XS, z - ZB - 20));
+  const dRoad = (x, z) => Math.min(Math.hypot(x, z - clamp(z, ZB, 60)), Math.hypot(x - clamp(x, -60, 660), z - ZB));
+  const dStat = (x, z) => Math.hypot(Math.max(Math.abs(x - SX) - 75, 0), Math.max(Math.abs(z - (ZB - 25)) - 27, 0));
+  const H = (x, z) => prof(z) + noise(x, z) * sm(9, 70, dRoad(x, z)) * sm(10, 60, dStat(x, z));
   let seed = 11; const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 
-  /* ---------- renderer, světlo, obloha ---------- */
+  /* ---------- renderer, světlo, obloha s mraky ---------- */
   const renderer = new T.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5)); renderer.setSize(960, 540, false);
   renderer.outputEncoding = T.sRGBEncoding; renderer.toneMapping = T.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
-  const scene = new T.Scene(), camera = new T.PerspectiveCamera(55, 960 / 540, .1, 1500);
-  scene.fog = new T.FogExp2(0xffffff, .0042);
+  const scene = new T.Scene(), camera = new T.PerspectiveCamera(55, 960 / 540, .1, 1600);
+  scene.fog = new T.FogExp2(0xffffff, .0036);
   const hemi = new T.HemisphereLight(0xaec8ff, 0x5a4a30, .62), sun = new T.DirectionalLight(0xffc48a, 3.1), moonL = new T.DirectionalLight(0x6f86d8, 0);
-  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -40, right: 40, top: 40, bottom: -40, near: 1, far: 240 });
+  sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 260 });
   sun.shadow.bias = -.0004; sun.shadow.normalBias = .04; scene.add(hemi, sun, sun.target, moonL);
   const SUN = new T.Vector3(-.7, .25, .5).normalize();
-  const skyU = { top: { value: new T.Color() }, bot: { value: new T.Color() }, sun: { value: SUN }, moon: { value: new T.Vector3(.3, .55, .4).normalize() }, night: { value: 0 } };
+  const skyU = { top: { value: new T.Color() }, bot: { value: new T.Color() }, sun: { value: SUN }, moon: { value: new T.Vector3(.3, .55, .4).normalize() }, night: { value: 0 }, time: { value: 0 } };
   const skyMat = new T.ShaderMaterial({
     uniforms: skyU, side: T.BackSide, depthWrite: false, fog: false,
     vertexShader: 'varying vec3 v;void main(){v=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader: `#include <tonemapping_pars_fragment>
 #include <encodings_pars_fragment>
-uniform vec3 top,bot,sun,moon;uniform float night;varying vec3 v;
+uniform vec3 top,bot,sun,moon;uniform float night,time;varying vec3 v;
+float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float ns(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1.,0.)),f.x),mix(hs(i+vec2(0.,1.)),hs(i+vec2(1.,1.)),f.x),f.y);}
+float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<5;i++){s+=a*ns(p);p*=2.03;a*=.5;}return s;}
 void main(){float h=clamp(v.y*1.4+.12,0.,1.);vec3 c=mix(bot,top,pow(h,.55));
 float s=max(dot(v,sun),0.);c+=vec3(1.,.72,.4)*(pow(s,900.)*4.+pow(s,14.)*.45+pow(s,3.)*.12)*(1.-night);
 float m=max(dot(v,moon),0.);c+=vec3(.8,.85,1.)*(pow(m,1500.)*3.+pow(m,40.)*.12)*night;
 float st=step(.9975,fract(sin(dot(floor(v*230.),vec3(12.9898,78.233,37.719)))*43758.5453));c+=vec3(st)*night*step(.1,v.y);
+if(v.y>.02){vec2 cp=v.xz/(v.y+.18)*1.5+vec2(time*.012,0.);float cl=smoothstep(.5,.82,fbm(cp));
+float lt=pow(max(dot(normalize(v.xz+1e-4),normalize(sun.xz+1e-4)),0.),2.)*.5+.5;vec3 cc=mix(vec3(.5,.45,.5),vec3(1.,.78,.58),lt)*mix(1.,.12,night);
+c=mix(c,cc,cl*.8*smoothstep(.02,.25,v.y));}
 gl_FragColor=vec4(c,1.);
 #include <tonemapping_fragment>
 #include <encodings_fragment>
 }`
   });
-  const sky = new T.Mesh(new T.SphereGeometry(800, 24, 16), skyMat); sky.renderOrder = -1; sky.frustumCulled = false; scene.add(sky);
+  const sky = new T.Mesh(new T.SphereGeometry(900, 24, 16), skyMat); sky.renderOrder = -1; sky.frustumCulled = false; scene.add(sky);
   const C = (r, g, b) => new T.Color(r, g, b), dayTop = C(.07, .24, .62), dayBot = C(1, .5, .22), nTop = C(0, .002, .02), nBot = C(.004, .008, .03);
   const lit = [], carEnv = [];
   function setNight(n) {
@@ -69,33 +78,42 @@ gl_FragColor=vec4(c,1.);
   }));
   const std = o => new T.MeshStandardMaterial(o);
   const board = (t, w, h, emissive) => { const e = std({ color: 0x555a5e, roughness: .6 }), f = emissive ? new T.MeshBasicMaterial({ map: t }) : std({ map: t, roughness: .55 }); const m = new T.Mesh(new T.BoxGeometry(w, h, .1), [e, e, e, e, f, f]); m.castShadow = true; return m; };
+  const speckle = (g, w, h, n, lo, hi, a) => { for (let i = 0; i < n; i++) { const v = lo + rnd() * (hi - lo) | 0; g.fillStyle = `rgba(${v},${v},${v + 3},${a})`; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 2, 1 + rnd() * 2); } };
   const asphalt = tex(cvs(256, 512, (g, w, h) => {
-    g.fillStyle = '#3a3c3f'; g.fillRect(0, 0, w, h);
-    for (let i = 0; i < 5500; i++) { const v = 40 + rnd() * 55 | 0; g.fillStyle = `rgba(${v},${v},${v + 3},.55)`; g.fillRect(rnd() * w, rnd() * h, 1 + rnd() * 2, 1 + rnd() * 2); }
+    g.fillStyle = '#3a3c3f'; g.fillRect(0, 0, w, h); speckle(g, w, h, 5500, 40, 95, .55);
     g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(w * .26, 0, w * .14, h); g.fillRect(w * .6, 0, w * .14, h);
     g.fillStyle = '#d9d7cd'; g.fillRect(w * .04, 0, 5, h); g.fillRect(w * .96 - 5, 0, 5, h); g.fillRect(w / 2 - 3, 0, 6, h * .45);
   }));
-  const grassTex = tex(cvs(256, 256, (g, w, h) => {
-    g.fillStyle = '#b9b9b9'; g.fillRect(0, 0, w, h);
-    for (let i = 0; i < 6000; i++) { const v = 120 + rnd() * 120 | 0; g.fillStyle = `rgba(${v},${v},${v},.4)`; g.fillRect(rnd() * w, rnd() * h, 1.5, 3); }
-  }), 140, 150);
+  const plainAsph = tex(cvs(256, 256, (g, w, h) => { g.fillStyle = '#4d4f52'; g.fillRect(0, 0, w, h); speckle(g, w, h, 5000, 60, 120, .5); }), 30, 9);
+  const grassTex = tex(cvs(256, 256, (g, w, h) => { g.fillStyle = '#b9b9b9'; g.fillRect(0, 0, w, h); for (let i = 0; i < 6000; i++) { const v = 120 + rnd() * 120 | 0; g.fillStyle = `rgba(${v},${v},${v},.4)`; g.fillRect(rnd() * w, rnd() * h, 1.5, 3); } }), 160, 160);
   const plaster = tex(cvs(128, 128, (g, w, h) => { g.fillStyle = '#d8d4cc'; g.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { const v = 170 + rnd() * 70 | 0; g.fillStyle = `rgba(${v},${v - 4},${v - 12},.35)`; g.fillRect(rnd() * w, rnd() * h, 2, 2); } }), 2, 2);
   const tiles = tex(cvs(64, 64, (g, w, h) => {
     g.fillStyle = '#9a4a30'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(40,12,6,.55)'; g.lineWidth = 2;
     for (let y = 0; y < h; y += 8) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); for (let x = (y / 8 % 2) * 8; x < w; x += 16) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 8); g.stroke(); } }
   }), 6, 3);
-  const concrete = tex(cvs(128, 128, (g, w, h) => { g.fillStyle = '#9a9a95'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1200; i++) { const v = 110 + rnd() * 70 | 0; g.fillStyle = `rgba(${v},${v},${v - 4},.4)`; g.fillRect(rnd() * w, rnd() * h, 2, 2); } }), 18, 10);
+  const solar = tex(cvs(256, 256, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#1b2a4d'); gr.addColorStop(1, '#0f1a35'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(150,170,210,.6)'; g.lineWidth = 2; for (let i = 0; i <= 8; i++) { g.beginPath(); g.moveTo(i * 32, 0); g.lineTo(i * 32, h); g.stroke(); g.beginPath(); g.moveTo(0, i * 32); g.lineTo(w, i * 32); g.stroke(); }
+  }), 3, 3);
+  const tuftTex = tex(cvs(64, 96, g => {
+    for (let i = 0; i < 16; i++) { const x = 8 + rnd() * 48, hgt = 40 + rnd() * 50, l = 70 + rnd() * 60 | 0; g.strokeStyle = `rgb(${l * .55 | 0},${l + 40},${l * .3 | 0})`; g.lineWidth = 2.5; g.beginPath(); g.moveTo(x, 96); g.quadraticCurveTo(x + (rnd() - .5) * 10, 96 - hgt / 2, x + (rnd() - .5) * 24, 96 - hgt); g.stroke(); }
+  }));
   const winMat = std({ color: 0x1c2a34, roughness: .2, metalness: .4, emissive: 0xffb85c, emissiveIntensity: 0 }); lit.push({ m: winMat, k: 2.4 });
+  const lampMat = std({ color: 0xfff6d8, emissive: 0xfff0c0, emissiveIntensity: 0, roughness: .2 }); lit.push({ m: lampMat, k: 3 });
 
-  /* ---------- terén a silnice ---------- */
-  const tg = new T.PlaneGeometry(1000, 1100, 200, 220); tg.rotateX(-Math.PI / 2); tg.translate(-350, 0, -300);
+  /* ---------- terén, silnice, odbočky ---------- */
+  const tg = new T.PlaneGeometry(1100, 1100, 220, 220); tg.rotateX(-Math.PI / 2); tg.translate(250, 0, -300);
   const tp = tg.attributes.position, tcol = new Float32Array(tp.count * 3);
+  const mixN = (a, b, t) => a + (b - a) * clamp(t, 0, 1);
   for (let i = 0; i < tp.count; i++) {
     const x = tp.getX(i), z = tp.getZ(i); tp.setY(i, H(x, z));
-    const n = (Math.sin(x * .05) * Math.cos(z * .043) * .5 + .5) * .7 + sm(430, 520, -z) * .5;
-    tcol.set([lerpN(.1, .3, n), lerpN(.2, .24, n), lerpN(.05, .07, n)], i * 3);
+    const n = (Math.sin(x * .05) * Math.cos(z * .043) * .5 + .5) * .7 + sm(430, 520, -z) * .3;
+    const wheat = sm(14, 40, z - ZB) * sm(-60, 0, x) * .9, crop = sm(55, 90, x - SX) * sm(12, 40, ZB - z);
+    let r = mixN(.1, .26, n), g = mixN(.2, .24, n), b = mixN(.05, .07, n);
+    r = mixN(r, .4, wheat); g = mixN(g, .3, wheat); b = mixN(b, .08, wheat);
+    r = mixN(r, .05, crop); g = mixN(g, .21, crop); b = mixN(b, .03, crop);
+    tcol.set([r, g, b], i * 3);
   }
-  function lerpN(a, b, t) { return a + (b - a) * clamp(t, 0, 1); }
   tg.setAttribute('color', new T.BufferAttribute(tcol, 3)); tg.computeVertexNormals();
   const terrain = new T.Mesh(tg, std({ vertexColors: true, map: grassTex, roughness: 1 })); terrain.receiveShadow = true; scene.add(terrain);
 
@@ -111,14 +129,22 @@ gl_FragColor=vec4(c,1.);
     const m = new T.Mesh(g, mat); m.receiveShadow = true; scene.add(m); return m;
   }
   const roadMat = std({ map: asphalt, roughness: .93, side: T.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  const plainMat = std({ map: plainAsph, roughness: .95, side: T.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
   const ptsA = [], ptsB = [];
   for (let z = 60; z >= ZB; z -= 3) ptsA.push([0, prof(z), z]);
-  for (let x = 30; x >= -830; x -= 6) ptsB.push([x, HP, ZB]);
+  for (let x = -60; x <= 660; x += 6) ptsB.push([x, HP, ZB]);
   ribbon(ptsA, 7, roadMat, .07); const rb = ribbon(ptsB, 7, roadMat.clone(), .09); rb.material.polygonOffsetFactor = -4;
-  // parkovací pole na státovce
-  const bayMark = new T.Mesh(new T.PlaneGeometry(28, 3.2), new T.MeshBasicMaterial({ color: 0x6ff09a, transparent: true, opacity: .32, depthWrite: false })); bayMark.rotation.x = -Math.PI / 2; bayMark.position.set(XS, HP + .13, ZB); scene.add(bayMark);
+  const slipDef = [[[62, 0], [62.5, 6], [59, 12], [52, 17.5], [44, 21.5], [36, 24.5]], [[-62, 0], [-62.5, 6], [-59, 12], [-52, 17.5], [-44, 21.5], [-36, 24.5]]];
+  const slips = slipDef.map(d => new T.CatmullRomCurve3(d.map(p => { const w = at(p[0], p[1]); return new T.Vector3(w[0], HP, w[1]); })).getPoints(28).map(v => [v.x, v.y, v.z]));
+  slips.forEach(p => ribbon(p, 6.5, plainMat, .07));
+  const apron = new T.Mesh(new T.PlaneGeometry(110, 31), plainMat); apron.rotation.x = -Math.PI / 2; { const a = at(-3, 32.5); apron.position.set(a[0], HP + .05, a[1]); } apron.receiveShadow = true; scene.add(apron);
+  const nearPath = (x, z, pts, hw) => { for (let i = 0; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1], dx = b[0] - a[0], dz = b[2] - a[2], t = clamp(((x - a[0]) * dx + (z - a[2]) * dz) / (dx * dx + dz * dz || 1), 0, 1); if (Math.hypot(x - a[0] - dx * t, z - a[2] - dz * t) < hw) return true; } return false; };
+  const onApron = (x, z) => x > SX - 58 && x < SX + 52 && z < ZB - 17 && z > ZB - 48;
+  const onB = (x, z) => x > -60 && x < 660 && Math.abs(z - ZB) < 3.6;
+  const roadAt = (x, z) => (z > ZB - 3.6 && z < 60 && Math.abs(x) < 3.6) || onB(x, z) || onApron(x, z) || (x > SX + 20 && z < ZB + 3 && nearPath(x, z, slips[0], 3.4)) || (x < SX - 20 && z < ZB + 3 && nearPath(x, z, slips[1], 3.4));
+  const ground = (x, z) => H(x, z) + (onB(x, z) ? .09 : roadAt(x, z) ? .07 : 0);
 
-  /* ---------- vesnice, kostel, stromy ---------- */
+  /* ---------- vesnice, kostel, stromy, tráva ---------- */
   const coneG = new T.ConeGeometry(.7071, 1, 4).rotateY(Math.PI / 4);
   function house(x, z, w, d, h, col, roofCol) {
     const g = new T.Group(), y = H(x, z) - .1; g.position.set(x, y, z); g.rotation.y = x < 0 ? Math.PI / 2 : -Math.PI / 2;
@@ -126,7 +152,7 @@ gl_FragColor=vec4(c,1.);
     const roof = new T.Mesh(coneG, std({ color: roofCol, map: tiles, roughness: .8 })); roof.scale.set(w * 1.12, 3.4, d * 1.12); roof.position.y = h + 1.7; roof.castShadow = true;
     const door = new T.Mesh(new T.BoxGeometry(1, 2, .12), std({ color: 0x4a3322, roughness: .8 })); door.position.set(0, 1, d / 2 + .02);
     g.add(wall, roof, door);
-    for (const [sx, sz, ry, ww] of [[-w * .3, d / 2 + .03, 0, w], [w * .3, d / 2 + .03, 0, w], [-w * .3, -d / 2 - .03, Math.PI, w], [w * .3, -d / 2 - .03, Math.PI, w], [w / 2 + .03, 0, Math.PI / 2, d], [-w / 2 - .03, 0, -Math.PI / 2, d]]) {
+    for (const [sx, sz, ry] of [[-w * .3, d / 2 + .03, 0], [w * .3, d / 2 + .03, 0], [-w * .3, -d / 2 - .03, Math.PI], [w * .3, -d / 2 - .03, Math.PI], [w / 2 + .03, 0, Math.PI / 2], [-w / 2 - .03, 0, -Math.PI / 2]]) {
       const wi = new T.Mesh(new T.PlaneGeometry(.95, 1.15), winMat); wi.position.set(sx, 2.2, sz); wi.rotation.y = ry; g.add(wi);
     }
     scene.add(g);
@@ -141,228 +167,338 @@ gl_FragColor=vec4(c,1.);
     const nave = new T.Mesh(new T.BoxGeometry(9, 9, 16), m); nave.position.y = 3; const tw = new T.Mesh(new T.BoxGeometry(4.4, 20, 4.4), m); tw.position.set(0, 8.5, 9);
     const sp = new T.Mesh(new T.ConeGeometry(3.2, 8, 4).rotateY(Math.PI / 4), std({ color: 0x4a3f3a, roughness: .7 })); sp.position.set(0, 22.5, 9);
     const rf = new T.Mesh(coneG, std({ color: 0x7d3a2a, map: tiles })); rf.scale.set(10, 4.5, 17); rf.position.set(0, 9.7, 0);
-    const cr = new T.Mesh(new T.BoxGeometry(.25, 2.4, .25), std({ color: 0x222 })); cr.position.set(0, 28, 9); const cr2 = new T.Mesh(new T.BoxGeometry(1.4, .25, .25), cr.material); cr2.position.set(0, 28.4, 9);
+    const cr = new T.Mesh(new T.BoxGeometry(.25, 2.4, .25), std({ color: 0x222222 })); cr.position.set(0, 28, 9); const cr2 = new T.Mesh(new T.BoxGeometry(1.4, .25, .25), cr.material); cr2.position.set(0, 28.4, 9);
     [nave, tw, sp, rf, cr, cr2].forEach(o => { o.castShadow = true; g.add(o); }); scene.add(g);
   })();
-  const trunkG = new T.CylinderGeometry(.25, .42, 4, 6).translate(0, 2, 0), crownG = new T.IcosahedronGeometry(1, 1);
-  const NT = 340, trunks = new T.InstancedMesh(trunkG, std({ color: 0x4a3626, roughness: 1 }), NT), c1 = new T.InstancedMesh(crownG, std({ roughness: .95 }), NT), c2 = new T.InstancedMesh(crownG, std({ roughness: .95 }), NT);
-  const dm = new T.Object3D(), tc = new T.Color(); let ti = 0;
-  for (let k = 0; k < 4000 && ti < NT; k++) {
-    const x = -830 + rnd() * 950, z = -830 + rnd() * 1000;
-    if (dRoad(x, z) < 13 || Math.hypot(x - XS, z - ZB - 20) < 58 || (x > -50 && x < 45 && z > -200 && z < 70) || Math.hypot(x + 34, z + 62) < 18) continue;
+  const trunkG = new T.CylinderGeometry(.25, .42, 4, 6).translate(0, 2, 0), crownG = new T.IcosahedronGeometry(1, 1), pineG = new T.ConeGeometry(1.6, 7, 8).translate(0, 5, 0);
+  const NT = 360, trunks = new T.InstancedMesh(trunkG, std({ color: 0x4a3626, roughness: 1 }), NT), c1 = new T.InstancedMesh(crownG, std({ roughness: .95 }), NT), c2 = new T.InstancedMesh(crownG, std({ roughness: .95 }), NT), pines = new T.InstancedMesh(pineG, std({ roughness: .95 }), NT);
+  const dm = new T.Object3D(), tc = new T.Color(); let ti = 0, pi2 = 0;
+  for (let k = 0; k < 6000 && ti + pi2 < NT; k++) {
+    const x = -290 + rnd() * 1080, z = -840 + rnd() * 1020;
+    if (dRoad(x, z) < 13 || dStat(x, z) < 12 || (x > -50 && x < 50 && z > -200 && z < 70) || Math.hypot(x + 34, z + 62) < 18 || (x > SX + 55 && x < SX + 85 && z > ZB - 40 && z < ZB + 5)) continue;
     if (Math.sin(x * .03) * Math.cos(z * .025) + rnd() * .8 < .1) continue;
     const y = H(x, z), s = .8 + rnd() * .9;
-    dm.position.set(x, y, z); dm.rotation.set(0, rnd() * 6, 0); dm.scale.set(s, s, s); dm.updateMatrix(); trunks.setMatrixAt(ti, dm.matrix);
-    dm.position.set(x, y + 4.6 * s, z); dm.scale.set(3.2 * s, 2.8 * s, 3.2 * s); dm.updateMatrix(); c1.setMatrixAt(ti, dm.matrix);
-    dm.position.set(x, y + 7 * s, z); dm.scale.set(2.2 * s, 2.2 * s, 2.2 * s); dm.updateMatrix(); c2.setMatrixAt(ti, dm.matrix);
-    tc.setRGB(.05 + rnd() * .08, .15 + rnd() * .1, .03 + rnd() * .04); c1.setColorAt(ti, tc); c2.setColorAt(ti, tc); ti++;
+    if (rnd() < .35) {
+      dm.position.set(x, y, z); dm.rotation.set(0, rnd() * 6, 0); dm.scale.set(s, s * (1 + rnd() * .4), s); dm.updateMatrix(); pines.setMatrixAt(pi2, dm.matrix);
+      tc.setRGB(.03 + rnd() * .04, .1 + rnd() * .06, .04 + rnd() * .03); pines.setColorAt(pi2, tc); pi2++;
+    } else {
+      dm.position.set(x, y, z); dm.rotation.set(0, rnd() * 6, 0); dm.scale.set(s, s, s); dm.updateMatrix(); trunks.setMatrixAt(ti, dm.matrix);
+      dm.position.set(x, y + 4.6 * s, z); dm.scale.set(3.2 * s, 2.8 * s, 3.2 * s); dm.updateMatrix(); c1.setMatrixAt(ti, dm.matrix);
+      dm.position.set(x, y + 7 * s, z); dm.scale.set(2.2 * s, 2.2 * s, 2.2 * s); dm.updateMatrix(); c2.setMatrixAt(ti, dm.matrix);
+      tc.setRGB(.05 + rnd() * .08, .15 + rnd() * .1, .03 + rnd() * .04); c1.setColorAt(ti, tc); c2.setColorAt(ti, tc); ti++;
+    }
   }
-  [trunks, c1, c2].forEach(m => { m.count = ti; m.castShadow = true; scene.add(m); });
-  // keře na konci cesty
+  [trunks, c1, c2].forEach(m => { m.count = ti; m.castShadow = true; scene.add(m); }); pines.count = pi2; pines.castShadow = true; scene.add(pines);
+  // trsy trávy kolem silnic
+  const NG = 5200, tuftG = new T.PlaneGeometry(.7, .9).translate(0, .45, 0), tuftM = std({ map: tuftTex, alphaTest: .45, side: T.DoubleSide, roughness: 1 });
+  const tu1 = new T.InstancedMesh(tuftG, tuftM, NG), tu2 = new T.InstancedMesh(tuftG, tuftM, NG); let gi = 0;
+  for (let k = 0; k < 20000 && gi < NG; k++) {
+    let x, z; const r = rnd();
+    if (r < .45) { z = 60 + (ZB - 60) * rnd(); x = (rnd() < .5 ? -1 : 1) * (4.5 + rnd() * 11); } else { x = -60 + 720 * rnd(); z = ZB + (rnd() < .5 ? -1 : 1) * (4.5 + rnd() * 11); }
+    if (onApron(x, z) || nearPath(x, z, slips[0], 5) || nearPath(x, z, slips[1], 5) || dStat(x, z) < 1 && z < ZB - 15) continue;
+    const y = H(x, z), s = .7 + rnd() * .8, a = rnd() * 3; tc.setRGB(.7 + rnd() * .5, .8 + rnd() * .4, .6 + rnd() * .3);
+    dm.position.set(x, y - .02, z); dm.rotation.set(0, a, 0); dm.scale.set(s, s, s); dm.updateMatrix(); tu1.setMatrixAt(gi, dm.matrix); tu1.setColorAt(gi, tc);
+    dm.rotation.set(0, a + Math.PI / 2, 0); dm.updateMatrix(); tu2.setMatrixAt(gi, dm.matrix); tu2.setColorAt(gi, tc); gi++;
+  }
+  tu1.count = tu2.count = gi; scene.add(tu1, tu2);
   const bushM = std({ color: 0x1f4a22, roughness: 1 });
-  for (let k = 0; k < 9; k++) { const b = new T.Mesh(crownG, bushM); b.scale.set(3.2, 2.2, 3.2); b.position.set(-14 + k * 3.4, HP + 1, ZB - 22 - (k % 2) * 2); b.castShadow = true; scene.add(b); }
+  for (let k = 0; k < 9; k++) { const b = new T.Mesh(crownG, bushM); b.scale.set(3.2, 2.2, 3.2); b.position.set(-14 + k * 3.8, HP + 1, ZB - 24 - (k % 2) * 2); b.castShadow = true; scene.add(b); }
 
   /* ---------- cedule, sloupy, billboard ---------- */
   function signPost(t, x, z, ry, w, h, yTop) {
-    const y = prof(z), b = board(t, w, h); b.position.set(x, y + yTop, z); b.rotation.y = ry;
+    const y = H(x, z), b = board(t, w, h); b.position.set(x, y + yTop, z); b.rotation.y = ry;
     const p = new T.Mesh(new T.CylinderGeometry(.06, .06, yTop, 8), std({ color: 0x777c80, metalness: .8, roughness: .4 })); p.position.set(x, y + yTop / 2, z); p.castShadow = true; scene.add(b, p);
   }
   signPost(label(['VRBČANY'], 512, 160, '#f4f4f4', '#111', 80), 5.5, 22, 0, 2.6, .8, 2.4);
-  signPost(label(['KM PRONA', '← státovka 400 m'], 512, 256, '#1b4fa3', '#fff', 78), 6, -500, 0, 3.4, 1.7, 3.2);
+  signPost(label(['KM PRONA', 'státovka →'], 512, 256, '#1b4fa3', '#fff', 78), 6, -520, 0, 3.4, 1.7, 3.2);
+  signPost(label(['KM PRONA', '← 150 m'], 512, 256, '#1b4fa3', '#fff', 78), SX - 90, ZB + 8, 0, 3.4, 1.7, 3.2);
   const bb = board(label(['KOTLIK', 'kotle • záchody • elektro'], 1024, 400, '#ffd21f', '#17262a', 170), 10, 3.9);
-  bb.position.set(-190, HP + 6, ZB - 12); bb.rotation.y = Math.PI / 2; scene.add(bb);
-  [-186, -194].forEach(zz => { const p = new T.Mesh(new T.CylinderGeometry(.15, .15, 6, 8), std({ color: 0x555 })); p.position.set(-190 - .1, HP + 3, ZB - 12 + (zz + 190) * 1.1); scene.add(p); });
+  bb.position.set(170, HP + 6, ZB - 12); bb.rotation.y = -Math.PI / 2; scene.add(bb);
+  [-5.5, 5.5].forEach(o => { const p = new T.Mesh(new T.CylinderGeometry(.15, .15, 6, 8), std({ color: 0x555555 })); p.position.set(170 + .1, HP + 3, ZB - 12 + o); scene.add(p); });
   const wires = [], poleM = std({ color: 0x4a3a2c, roughness: 1 });
-  for (let x = -40; x > -820; x -= 50) {
-    const p = new T.Mesh(new T.CylinderGeometry(.13, .17, 9, 7), poleM); p.position.set(x, HP + 4.5, ZB - 6); p.castShadow = true; scene.add(p);
-    const a = new T.Mesh(new T.BoxGeometry(.2, .2, 3), poleM); a.position.set(x, HP + 8.6, ZB - 6); scene.add(a);
+  for (let x = 20; x < 640; x += 50) {
+    const p = new T.Mesh(new T.CylinderGeometry(.13, .17, 9, 7), poleM); p.position.set(x, HP + 4.5, ZB + 7); p.castShadow = true; scene.add(p);
+    const a = new T.Mesh(new T.BoxGeometry(.2, .2, 3), poleM); a.position.set(x, HP + 8.6, ZB + 7); scene.add(a);
     for (const o of [-1.3, 0, 1.3]) for (let s = 0; s < 8; s++) {
-      const f = k => { const t = k / 8; return [x - 50 * t, HP + 8.5 - Math.sin(Math.PI * t) * 1.3, ZB - 6 + o]; };
+      const f = k => { const t = k / 8; return [x + 50 * t, HP + 8.5 - Math.sin(Math.PI * t) * 1.3, ZB + 7 + o]; };
       wires.push(...f(s), ...f(s + 1));
     }
   }
   const wg = new T.BufferGeometry(); wg.setAttribute('position', new T.Float32BufferAttribute(wires, 3)); scene.add(new T.LineSegments(wg, new T.LineBasicMaterial({ color: 0x0a0a0a })));
 
-  /* ---------- benzinka KM Prona ---------- */
-  (() => {
-    const g = new T.Group(); g.position.set(XS, HP, ZB); scene.add(g);
-    const slab = new T.Mesh(new T.PlaneGeometry(70, 30), std({ map: concrete, roughness: .95 })); slab.rotation.x = -Math.PI / 2; slab.position.set(0, .06, 19); slab.receiveShadow = true; g.add(slab);
-    const blue = std({ color: 0x1c3f86, roughness: .5, metalness: .2 }), white = std({ color: 0xe9edf2, roughness: .6 }), glow = std({ color: 0xfff1d0, emissive: 0xffe2a8, emissiveIntensity: 0 }); lit.push({ m: glow, k: 1.5 });
-    const roof = new T.Mesh(new T.BoxGeometry(26, .7, 14), white); roof.position.set(0, 6.2, 14); roof.castShadow = true; g.add(roof);
-    const under = new T.Mesh(new T.PlaneGeometry(25, 13), glow); under.rotation.x = Math.PI / 2; under.position.set(0, 5.8, 14); g.add(under);
-    const fas = board(label(['KM PRONA'], 1024, 200, '#1c3f86', '#fff', 130), 26, 1.7); fas.position.set(0, 6.4, 21.1); g.add(fas);
-    const stripe = new T.Mesh(new T.BoxGeometry(26.1, .3, .2), std({ color: 0xf58220 })); stripe.position.set(0, 5.5, 21.1); g.add(stripe);
-    for (const [px, pz] of [[-12, 8], [12, 8], [-12, 20], [12, 20]]) { const p = new T.Mesh(new T.BoxGeometry(.5, 6, .5), white); p.position.set(px, 3, pz); p.castShadow = true; g.add(p); }
-    for (const px of [-5, 5]) {
-      const isl = new T.Mesh(new T.BoxGeometry(2, .3, 6), std({ color: 0xaaaaa4 })); isl.position.set(px, .2, 14); g.add(isl);
-      const pu = new T.Mesh(new T.BoxGeometry(.9, 2.2, .8), std({ color: 0xd8372b, roughness: .4 })); pu.position.set(px, 1.4, 14); pu.castShadow = true; g.add(pu);
-      const sc = new T.Mesh(new T.PlaneGeometry(.55, .5), winMat); sc.position.set(px, 1.9, 14.41); g.add(sc);
+  /* ---------- benzinka KM Prona (podle leteckého snímku) ---------- */
+  const white = std({ color: 0xe9edf2, roughness: .6 }), blue = std({ color: 0x1c3f86, roughness: .5, metalness: .2 }), glow = std({ color: 0xfff1d0, emissive: 0xffe2a8, emissiveIntensity: 0 }); lit.push({ m: glow, k: 1.5 });
+  const put = (m, e, n, y) => { const w = at(e, n); m.position.set(w[0], HP + y, w[1]); m.castShadow = true; scene.add(m); return m; };
+  const box = (w, h, d, mat, e, n, y) => put(new T.Mesh(new T.BoxGeometry(w, h, d), mat), e, n, y);
+  // hlavní budova s modrým lemem střechy
+  const wall = std({ color: 0xaeb8c0, roughness: .85 }); box(16.5, 4.6, 11, wall, -3.7, 33.5, 2.3); box(16.8, .3, 11.3, std({ color: 0x4b5258, roughness: .9 }), -3.7, 33.5, 4.75);
+  for (const [w, d, e, n] of [[17.4, .5, -3.7, 28], [17.4, .5, -3.7, 39], [.5, 11.5, 5, 33.5], [.5, 11.5, -12.4, 33.5]]) box(w, .7, d, blue, e, n, 4.9);
+  const shopWin = new T.Mesh(new T.PlaneGeometry(12, 2.2), winMat); put(shopWin, -3.7, 27.9, 2.3); shopWin.castShadow = false;
+  const shopSign = board(label(['KM PRONA'], 1024, 160, '#1c3f86', '#fff', 110), 9, 1.4); put(shopSign, -3.7, 27.8, 4.1);
+  box(9, 3.4, 6, std({ color: 0x6b7a8c, roughness: .8 }), -30.5, 30, 1.7); box(9.4, .3, 6.4, std({ color: 0x3c4a60 }), -30.5, 30, 3.5);
+  // kryté stání se solárními panely
+  function canopy(e, n, w, d) {
+    box(w, .6, d, white, e, n, 5.6);
+    const sp = new T.Mesh(new T.PlaneGeometry(w - 1, d - 1), std({ map: solar, roughness: .25, metalness: .6, envMap: envTex })); sp.rotation.x = -Math.PI / 2; put(sp, e, n, 5.92); sp.castShadow = false;
+    const un = new T.Mesh(new T.PlaneGeometry(w - .6, d - .6), glow); un.rotation.x = Math.PI / 2; put(un, e, n, 5.28); un.castShadow = false;
+    for (const [px, pz] of [[-w / 2 + .5, -d / 2 + .5], [w / 2 - .5, -d / 2 + .5], [-w / 2 + .5, d / 2 - .5], [w / 2 - .5, d / 2 - .5]]) box(.5, 5.4, .5, white, e + px, n + pz, 2.7);
+    for (const px of [-w / 4, w / 4]) {
+      box(2, .3, 6, std({ color: 0xaaaaa4 }), e + px, n, .15); box(.9, 2.2, .8, std({ color: 0xd8372b, roughness: .4 }), e + px, n, 1.3);
+      const sc = new T.Mesh(new T.PlaneGeometry(.55, .5), winMat); put(sc, e + px, n - .41, 1.8); sc.castShadow = false;
     }
-    const shop = new T.Mesh(new T.BoxGeometry(18, 5, 12), white); shop.position.set(28, 2.5, 20); shop.castShadow = shop.receiveShadow = true; g.add(shop);
-    const sg = new T.Mesh(new T.PlaneGeometry(15, 2.6), winMat); sg.position.set(28, 2.2, 13.95); g.add(sg);
-    const sr = new T.Mesh(new T.BoxGeometry(19, .5, 13), blue); sr.position.set(28, 5.2, 20); g.add(sr);
-    const py = new T.Mesh(new T.BoxGeometry(.35, 12, .35), white); py.position.set(20, 6, 8); g.add(py);
-    const ps = board(label(['KM PRONA', 'Nafta 36,90'], 512, 320, '#1c3f86', '#ffd21f', 100), 3.4, 2.1, true); ps.position.set(20, 11.5, 8); g.add(ps);
-    for (const [lx, lz] of [[-5, 12], [5, 12]]) { const L = new T.PointLight(0xffd9a0, 0, 42, 1.6); L.position.set(lx, 5, lz + 2); g.add(L); lit.push({ m: L, k: 5 }); }
+    const L = new T.PointLight(0xffd9a0, 0, 42, 1.6); const wp = at(e, n); L.position.set(wp[0], HP + 5, wp[1]); scene.add(L); lit.push({ m: L, k: 5 });
+  }
+  canopy(17, 38, 10, 10); canopy(16, 27, 9, 9);
+  put(board(label(['KM PRONA'], 1024, 160, '#1c3f86', '#fff', 110), 8, 1), 16, 22.4, 5.4).castShadow = false;
+  // pylon s cenami u levé odbočky
+  box(.35, 12, .35, white, -50, 12, 6); const ps = board(label(['KM PRONA', 'Nafta 36,90'], 512, 320, '#1c3f86', '#ffd21f', 100), 3.4, 2.1, true); put(ps, -50, 12, 11.5);
+  // značka P a parkovací stání
+  box(.08, 2.4, .08, white, -19.5, 19, 1.2); put(board(label(['P'], 256, 256, '#1b4fa3', '#fff', 200), .9, .9), -19.5, 19, 2.55);
+  const lineM = new T.MeshBasicMaterial({ color: 0xf2f2f2 });
+  for (const e of [-24, -20.5, -19, -16, -14.5, -11.5, -10.5, -7.5]) { const l = new T.Mesh(new T.BoxGeometry(.1, .02, 5.2), lineM); put(l, e, 21.5, .09); l.castShadow = false; }
+  const bayG = new T.Group(); { const w = at(-17.5, 21.5); bayG.position.set(w[0], HP + .11, w[1]); } scene.add(bayG);
+  const bayPl = new T.Mesh(new T.PlaneGeometry(3, 5.2), new T.MeshBasicMaterial({ color: 0x6ff09a, transparent: true, opacity: .3, depthWrite: false })); bayPl.rotation.x = -Math.PI / 2; bayG.add(bayPl);
+  // keře, lampy
+  for (const [e, n, s] of [[-32, 14, 1.5], [-28, 15.5, 1.3], [-9, 15, 1.4], [-4, 16.5, 1.6], [-22, 12.5, 1.2], [30, 13, 1.5]]) { const b = new T.Mesh(crownG, bushM); b.scale.set(s, s * .9, s); put(b, e, n, s * .8); }
+  for (const e of [-45, -20, 5, 30, 45]) { box(.2, 8, .2, std({ color: 0x777c80 }), e, 18.5, 4); const h = box(1.2, .25, .5, lampMat, e, 18.5, 8.1); h.castShadow = false; }
+  // cisternový náklaďák u pravé odbočky
+  (() => {
+    const g = new T.Group(); const w = at(68, 12); g.position.set(w[0], HP, w[1]); g.rotation.y = .6;
+    const cab = new T.Mesh(new T.BoxGeometry(2.4, 2.8, 2.2), std({ color: 0x244d96, roughness: .5 })); cab.position.set(0, 1.9, 0);
+    const tr = new T.Mesh(new T.BoxGeometry(2.5, 2.4, 11), std({ color: 0x9a7b4f, roughness: .9 })); tr.position.set(0, 1.9, 6.8);
+    [cab, tr].forEach(o => { o.castShadow = true; g.add(o); }); scene.add(g);
   })();
 
-  /* ---------- auto (procedurální Oktávka Combi) ---------- */
-  const car = new T.Group(), rig = new T.Group(); car.add(rig); scene.add(car);
-  const bodyMat = new T.MeshPhysicalMaterial({ color: 0xbfc4c8, metalness: .85, roughness: .3, clearcoat: 1, clearcoatRoughness: .1, envMap: envTex });
+  /* ---------- auto (Škoda Octavia I Combi): sdílená geometrie + stavěč ---------- */
+  // model: délka = osa X (předek +X), výška = Y, šířka = Z (pravá strana +Z); celý model se otočí, aby předek mířil do -Z
+  const baseBody = new T.MeshPhysicalMaterial({ color: 0xbfc4c8, metalness: .85, roughness: .3, clearcoat: 1, clearcoatRoughness: .1, envMap: envTex });
   const glassMat = new T.MeshPhysicalMaterial({ color: 0x07090b, metalness: .9, roughness: .05, envMap: envTex });
-  const rimMat = new T.MeshStandardMaterial({ color: 0xc9ced2, metalness: 1, roughness: .25, envMap: envTex }); carEnv.push(bodyMat, glassMat, rimMat);
-  const trim = std({ color: 0x25282b, roughness: .65, metalness: .2 });
-  const ext = (shape, depth, bevel, mat) => {
-    const g = new T.ExtrudeGeometry(shape, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel * .8, bevelSegments: 3, curveSegments: 18 });
-    g.translate(0, 0, -depth / 2); g.rotateY(Math.PI / 2); const m = new T.Mesh(g, mat); m.castShadow = true; rig.add(m); return m;
+  const rimMat = new T.MeshStandardMaterial({ color: 0xc9ced2, metalness: 1, roughness: .25, envMap: envTex });
+  const chrome = new T.MeshStandardMaterial({ color: 0xe4e8eb, metalness: 1, roughness: .15, envMap: envTex }); carEnv.push(baseBody, glassMat, rimMat, chrome);
+  const trim = std({ color: 0x25282b, roughness: .65, metalness: .2 }), black = std({ color: 0x090a0b, roughness: .75 }), tireM = std({ color: 0x131415, roughness: .9 });
+  const smoothGeo = g0 => {
+    const p = g0.attributes.position, map = new Map(), pos = [], idx = [];
+    for (let i = 0; i < p.count; i++) {
+      const k = Math.round(p.getX(i) * 2000) + ',' + Math.round(p.getY(i) * 2000) + ',' + Math.round(p.getZ(i) * 2000); let j = map.get(k);
+      if (j === undefined) { j = pos.length / 3; map.set(k, j); pos.push(p.getX(i), p.getY(i), p.getZ(i)); } idx.push(j);
+    }
+    const o = new T.BufferGeometry(); o.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); o.setIndex(idx); o.computeVertexNormals(); return o;
   };
-  const bs = new T.Shape(); bs.moveTo(-2.22, .3); bs.absarc(-1.25, .3, .42, Math.PI, 0, true); bs.absarc(1.25, .3, .42, Math.PI, 0, true);
-  [[2.22, .3], [2.25, .58], [2.15, .78], [1.3, .93], [.65, 1], [-2.2, 1], [-2.25, .8]].forEach(p => bs.lineTo(p[0], p[1])); bs.closePath();
-  ext(bs, 1.5, .1, bodyMat);
-  const cs = new T.Shape(); [[-2.15, 1], [.65, 1], [.04, 1.43], [-1.98, 1.46]].forEach((p, i) => i ? cs.lineTo(p[0], p[1]) : cs.moveTo(p[0], p[1])); cs.closePath();
-  ext(cs, 1.5, .04, bodyMat);
-  [[[-.15, 1.06], [.52, 1.06], [.08, 1.37], [-.15, 1.37]], [[-1.05, 1.06], [-.3, 1.06], [-.3, 1.38], [-1.05, 1.4]], [[-2, 1.06], [-1.2, 1.06], [-1.2, 1.41], [-1.88, 1.41]]].forEach(pts => {
-    const s = new T.Shape(); pts.forEach((p, i) => i ? s.lineTo(p[0], p[1]) : s.moveTo(p[0], p[1])); s.closePath(); ext(s, 1.64, 0, glassMat);
-  });
-  const glassPlane = (w, h, nx, ny, mx, my) => { const g = new T.PlaneGeometry(w, h); g.rotateY(Math.PI / 2); g.rotateZ(Math.atan2(ny, nx)); g.translate(mx + nx * .012, my + ny * .012, 0); const m = new T.Mesh(g, glassMat); rig.add(m); };
-  glassPlane(1.3, .746, .577, .817, .345, 1.215); glassPlane(1.3, .49, -.939, .347, -2.065, 1.23);
-  const bx = (w, h, d, x, y, z, mat, parent = rig) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m; };
-  bx(3.7, .12, 1.78, -.05, .42, 0, trim); bx(3.4, .07, 1.74, -.1, .66, 0, trim); bx(.05, .14, .8, 2.3, .62, 0, trim); bx(.1, .22, 1.7, -2.3, .42, 0, trim);
-  const lamp = std({ color: 0xfff6d8, emissive: 0xfff0c0, emissiveIntensity: .7 }); bx(.06, .2, .4, 2.27, .8, .62, lamp); bx(.06, .2, .4, 2.27, .8, -.62, lamp);
-  const tail = std({ color: 0xa01610, emissive: 0xff1a0e, emissiveIntensity: .35, roughness: .3 }); bx(.08, .3, .3, -2.31, .88, .7, tail); bx(.08, .3, .3, -2.31, .88, -.7, tail);
-  bx(.06, .06, 2.4, -.9, 1.51, .62, trim).rotation.z = 0; bx(2.4, .05, .06, -.8, 1.5, .62, trim); bx(2.4, .05, .06, -.8, 1.5, -.62, trim);
-  bx(.3, .13, .2, .5, 1.12, .96, trim); bx(.3, .13, .2, .5, 1.12, -.96, trim);
-  const plate = new T.Mesh(new T.PlaneGeometry(.56, .12), new T.MeshStandardMaterial({ map: tex(cvs(256, 56, (g, w, h) => { g.fillStyle = '#f2f2ee'; g.fillRect(0, 0, w, h); g.fillStyle = '#1b4fa3'; g.fillRect(0, 0, 22, h); g.fillStyle = '#111'; g.font = 'bold 40px Arial'; g.textAlign = 'center'; g.fillText('KOTEL', w / 2 + 10, 42); })), roughness: .4 }));
-  plate.rotation.y = -Math.PI / 2; plate.position.set(-2.345, .62, 0); rig.add(plate);
-  const rustTex = tex(cvs(128, 128, g => { for (let i = 0; i < 70; i++) { const x = 64 + (rnd() - .5) * 90, y = 64 + (rnd() - .5) * 90, r = 2 + rnd() * 10; g.fillStyle = `rgba(${120 + rnd() * 50 | 0},${50 + rnd() * 30 | 0},18,${.35 + rnd() * .5})`; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); } }));
+  const GEO = {};
+  (() => {
+    const mk = (pts, depth, bevel, arcs) => {
+      const s = new T.Shape(); arcs ? arcs(s) : pts.forEach((p, i) => i ? s.lineTo(p[0], p[1]) : s.moveTo(p[0], p[1])); s.closePath();
+      const g0 = new T.ExtrudeGeometry(s, { depth, bevelEnabled: bevel > 0, bevelThickness: bevel, bevelSize: bevel * .8, bevelSegments: 3, curveSegments: 20 });
+      g0.translate(0, 0, -depth / 2); const p = g0.attributes.position;
+      for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i); let z = p.getZ(i); z *= 1 - (x > 0 ? .3 : .16) * Math.pow(sm(.4, 1, Math.abs(x) / 2.3), 1.4); z *= 1 - .1 * sm(1, 1.46, y); p.setZ(i, z); }
+      return smoothGeo(g0);
+    };
+    GEO.body = mk(null, 1.5, .1, s => { s.moveTo(-2.22, .3); s.absarc(-1.25, .3, .42, Math.PI, 0, true); s.absarc(1.25, .3, .42, Math.PI, 0, true); [[2.22, .3], [2.25, .58], [2.15, .78], [1.3, .93], [.65, 1], [-2.2, 1], [-2.25, .8]].forEach(p => s.lineTo(p[0], p[1])); });
+    GEO.cabin = mk([[-2.15, 1], [.65, 1], [.04, 1.43], [-1.98, 1.46]], 1.5, .04);
+    GEO.glass = [[[-.15, 1.06], [.52, 1.06], [.08, 1.37], [-.15, 1.37]], [[-1.05, 1.06], [-.3, 1.06], [-.3, 1.38], [-1.05, 1.4]], [[-2, 1.06], [-1.2, 1.06], [-1.2, 1.41], [-1.88, 1.41]]].map(p => mk(p, 1.64, 0));
+    const pl = (w, h, nx, ny, mx, my) => { const g0 = new T.PlaneGeometry(w, h); g0.rotateY(Math.PI / 2); g0.rotateZ(Math.atan2(ny, nx)); g0.translate(mx + nx * .012, my + ny * .012, 0); return g0; };
+    GEO.ws = pl(1.3, .746, .577, .817, .345, 1.215); GEO.rw = pl(1.3, .49, -.939, .347, -2.065, 1.23);
+    GEO.tire = new T.LatheGeometry([[.2, -.11], [.29, -.11], [.325, -.08], [.335, 0], [.325, .08], [.29, .11], [.2, .11]].map(p => new T.Vector2(p[0], p[1])), 28).rotateX(Math.PI / 2);
+    GEO.rim = new T.CylinderGeometry(.21, .21, .2, 24).rotateX(Math.PI / 2); GEO.disc = new T.CylinderGeometry(.17, .17, .02, 24).rotateX(Math.PI / 2); GEO.hub = new T.CylinderGeometry(.05, .05, .02, 14).rotateX(Math.PI / 2);
+    GEO.spoke = new T.BoxGeometry(.4, .055, .03); GEO.hs = new T.CylinderGeometry(.43, .43, 1.3, 20).rotateX(Math.PI / 2);
+  })();
+  const plateM = new T.MeshStandardMaterial({ map: tex(cvs(256, 56, (g0, w, h) => { g0.fillStyle = '#f2f2ee'; g0.fillRect(0, 0, w, h); g0.fillStyle = '#1b4fa3'; g0.fillRect(0, 0, 22, h); g0.fillStyle = '#111'; g0.font = 'bold 40px Arial'; g0.textAlign = 'center'; g0.fillText('KOTEL', w / 2 + 10, 42); })), roughness: .4 });
+  const rustTex = tex(cvs(128, 128, g0 => { for (let i = 0; i < 70; i++) { const x = 64 + (rnd() - .5) * 90, y = 64 + (rnd() - .5) * 90, r = 2 + rnd() * 10; g0.fillStyle = `rgba(${120 + rnd() * 50 | 0},${50 + rnd() * 30 | 0},18,${.35 + rnd() * .5})`; g0.beginPath(); g0.arc(x, y, r, 0, 7); g0.fill(); } }));
   const rustM = new T.MeshStandardMaterial({ map: rustTex, transparent: true, roughness: 1, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 });
-  [[-2.348, .66, -.36, 0, -Math.PI / 2, .6], [-2.348, .5, .4, 0, -Math.PI / 2, .5], [-1.5, .55, .88, 0, 0, .5], [-1.5, .55, -.88, 0, Math.PI, .5], [1.6, .5, .88, 0, 0, .35]].forEach(([x, y, z, rx, ry, s]) => { const m = new T.Mesh(new T.PlaneGeometry(s, s), rustM); m.position.set(x, y, z); m.rotation.set(rx, ry, 0); rig.add(m); });
-  // Wolt box
-  const woltBox = bx(1.1, .3, .55, -.75, 1.67, 0, new T.MeshStandardMaterial({ map: tex(cvs(256, 80, (g, w, h) => { g.fillStyle = '#19a7e0'; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.font = 'italic bold 58px Arial'; g.textAlign = 'center'; g.fillText('Wolt', w / 2, 60); })), roughness: .5 })); woltBox.visible = false;
-  // kola
-  const tireM = std({ color: 0x131415, roughness: .9 }), dark = std({ color: 0x050505, roughness: 1 }), wheels = [];
-  for (const [wx, wz] of [[1.25, .8], [1.25, -.8], [-1.25, .8], [-1.25, -.8]]) {
-    const w = new T.Group(); w.position.set(wx, .32, wz); car.add(w);
-    const tire = new T.Mesh(new T.CylinderGeometry(.32, .32, .22, 28).rotateZ(Math.PI / 2), tireM); tire.castShadow = true;
-    const rim = new T.Mesh(new T.CylinderGeometry(.21, .21, .225, 24).rotateZ(Math.PI / 2), std({ color: 0x2a2c2e, metalness: .6, roughness: .4 })); w.add(tire, rim);
-    for (let k = 0; k < 5; k++) { const sp = new T.Mesh(new T.BoxGeometry(.235, .38, .05), rimMat); sp.rotation.x = k * Math.PI / 5; w.add(sp); }
-    wheels.push(w);
-    const hs = new T.Mesh(new T.CylinderGeometry(.43, .43, 1.3, 20).rotateZ(Math.PI / 2), dark); hs.position.set(wx, .32, 0); hs.scale.set(1, .96, .96); car.add(hs);
+  const woltT = new T.MeshStandardMaterial({ map: tex(cvs(256, 80, (g0, w, h) => { g0.fillStyle = '#19a7e0'; g0.fillRect(0, 0, w, h); g0.fillStyle = '#fff'; g0.font = 'italic bold 58px Arial'; g0.textAlign = 'center'; g0.fillText('Wolt', w / 2, 60); })), roughness: .5 }), woltP = std({ color: 0x19a7e0, roughness: .5 });
+
+  function buildCar(color, o = {}) {
+    const car = new T.Group(), rig = new T.Group(), model = new T.Group(), detail = o.detail !== false;
+    model.rotation.y = Math.PI / 2; rig.add(model); car.add(rig); scene.add(car);
+    const bodyMat = baseBody.clone(); bodyMat.color.set(color); carEnv.push(bodyMat);
+    const mesh = (g0, mat) => { const m = new T.Mesh(g0, mat); m.castShadow = true; model.add(m); return m; };
+    const bx = (w, h, d, x, y, z, mat = trim) => { const m = mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); return m; };
+    mesh(GEO.body, bodyMat); mesh(GEO.cabin, bodyMat); GEO.glass.forEach(g0 => mesh(g0, glassMat)); mesh(GEO.ws, glassMat).castShadow = false; mesh(GEO.rw, glassMat).castShadow = false;
+    bx(3.7, .12, 1.78, -.05, .42, 0); bx(3.4, .07, 1.74, -.1, .66, 0); bx(.1, .14, .95, 2.24, .4, 0, black); bx(.12, .16, 1.15, -2.3, .42, 0); bx(.06, .18, .62, 2.3, .7, 0, black);
+    const tail = std({ color: 0xa01610, emissive: 0xff1a0e, emissiveIntensity: .35, roughness: .3 }), indL = std({ color: 0xff9a1a, emissive: 0xff7a00, emissiveIntensity: 0, roughness: .3 }), indR = indL.clone();
+    for (const s of [-1, 1]) {
+      const hl = bx(.1, .22, .34, 2.2, .84, s * .46, lampMat); hl.rotation.y = -s * .45;
+      bx(.07, .07, .16, 2.24, .67, s * .62, s < 0 ? indL : indR).rotation.y = -s * .6;
+      bx(.09, .34, .26, -2.29, .93, s * .6, tail).rotation.y = s * .2; bx(.08, .09, .24, -2.3, .72, s * .6, s < 0 ? indL : indR).rotation.y = s * .2;
+      if (detail) { bx(.06, .09, .16, -2.3, .46, s * .66, std({ color: 0xb01c14, roughness: .3 })); bx(.06, .08, .12, 2.25, .4, s * .56, lampMat); }
+      bx(2.3, .05, .06, -.85, 1.5, s * .62);
+      const mi = mesh(new T.SphereGeometry(.1, 10, 8), bodyMat); mi.scale.set(.8, .9, 1.25); mi.position.set(.55, 1.13, s * .98);
+      if (detail) {
+        bx(.08, .05, .08, .15, 1.47, s * .62); bx(.08, .05, .08, -1.8, 1.47, s * .62); bx(.16, .035, .03, -.05, .98, s * .858, chrome); bx(.16, .035, .03, -.95, .98, s * .858, chrome);
+        for (const dx of [.55, -.45, -1.4]) bx(.012, .62, .012, dx, .83, s * .852, black);
+      }
+    }
+    if (detail) {
+      bx(.05, .22, .7, 2.28, .7, 0, chrome); bx(.04, .22, .64, 2.31, .7, 0, black);
+      const b1 = mesh(new T.CylinderGeometry(.055, .055, .03, 20).rotateZ(Math.PI / 2), chrome); b1.position.set(2.33, .8, 0);
+      const b2 = mesh(new T.CylinderGeometry(.04, .04, .035, 20).rotateZ(Math.PI / 2), std({ color: 0x1c7a3a, roughness: .4 })); b2.position.set(2.335, .8, 0);
+      bx(.34, .05, 1.22, -2.03, 1.5, 0, bodyMat); bx(.03, .03, .9, -2.2, 1.49, 0, tail); bx(.02, .02, .34, -2.11, 1.1, .12, black);
+      const ant = mesh(new T.CylinderGeometry(.008, .01, .55, 6), black); ant.position.set(-1.55, 1.75, .45); ant.rotation.z = .45;
+      const hook = mesh(new T.CylinderGeometry(.03, .03, .3, 8).rotateZ(Math.PI / 2), black); hook.position.set(-2.45, .36, .12); const ball = mesh(new T.SphereGeometry(.055, 10, 8), black); ball.position.set(-2.62, .36, .12);
+      const ex = mesh(new T.CylinderGeometry(.045, .045, .14, 12).rotateZ(Math.PI / 2), chrome); ex.position.set(-2.36, .33, -.48);
+    }
+    const pr = new T.Mesh(new T.PlaneGeometry(.56, .12), plateM); pr.rotation.y = -Math.PI / 2; pr.position.set(-2.345, .6, 0); model.add(pr);
+    const pf = new T.Mesh(new T.PlaneGeometry(.56, .12), plateM); pf.rotation.y = Math.PI / 2; pf.position.set(2.34, .46, 0); model.add(pf);
+    if (o.rust !== false) [[-2.352, .66, -.36, -Math.PI / 2, .6], [-2.352, .5, .4, -Math.PI / 2, .5], [-1.5, .55, .862, 0, .5], [-1.5, .55, -.862, Math.PI, .5], [1.6, .5, .862, 0, .35], [-.3, .45, -.862, Math.PI, .4]].forEach(([x, y, z, ry, s]) => { const m = new T.Mesh(new T.PlaneGeometry(s, s), rustM); m.position.set(x, y, z); m.rotation.y = ry; model.add(m); });
+    const woltBox = new T.Mesh(new T.BoxGeometry(.55, .32, 1.05), [woltT, woltT, woltP, woltP, woltP, woltP]); woltBox.position.set(-.7, 1.67, 0); woltBox.castShadow = true; woltBox.visible = !!o.wolt; model.add(woltBox);
+    const wheels = [];
+    for (const [wx, wz] of [[1.25, .8], [1.25, -.8], [-1.25, .8], [-1.25, -.8]]) {
+      const w = new T.Group(), s = Math.sign(wz); w.position.set(wx, .32, wz); w.rotation.order = 'YZX'; model.add(w);
+      const tire = new T.Mesh(GEO.tire, tireM); tire.castShadow = true; w.add(tire, new T.Mesh(GEO.rim, std({ color: 0x2a2c2e, metalness: .6, roughness: .4 })));
+      if (detail) {
+        const disc = new T.Mesh(GEO.disc, std({ color: 0x555a5e, metalness: .9, roughness: .5 })); disc.position.z = -s * .05; const hub = new T.Mesh(GEO.hub, chrome); hub.position.z = s * .105; w.add(disc, hub);
+        for (let k = 0; k < 5; k++) { const sp = new T.Mesh(GEO.spoke, rimMat); sp.rotation.z = k * Math.PI / 5; sp.position.z = s * .09; w.add(sp); }
+      }
+      wheels.push({ g: w, front: wx > 0 });
+      const hs = new T.Mesh(GEO.hs, black); hs.position.set(wx, .32, 0); hs.scale.set(.96, .96, 1); model.add(hs);
+    }
+    return { car, rig, model, bodyMat, tail, indL, indR, wheels, woltBox };
   }
-  const brakeLamp = tail;
-  function applySkin(s) {
-    const w = s === 'wolt'; bodyMat.color.set(w ? 0x1fa6e4 : 0xbfc4c8); bodyMat.metalness = w ? .55 : .85; woltBox.visible = w;
+  const P = buildCar(0xbfc4c8), car = P.car, rig = P.rig, wheels = P.wheels, tail = P.tail, indL = P.indL, indR = P.indR;
+  function applySkin(s) { const w = s === 'wolt'; P.bodyMat.color.set(w ? 0x1fa6e4 : 0xbfc4c8); P.bodyMat.metalness = w ? .55 : .85; P.woltBox.visible = w; }
+  function pose(c, x, z, psi) {
+    const fx = -Math.sin(psi), fz = -Math.cos(psi), hF = ground(x + fx * 2.3, z + fz * 2.3), hR = ground(x - fx * 2.3, z - fz * 2.3), hL = ground(x + fz * .9, z - fx * .9), hRt = ground(x - fz * .9, z + fx * .9);
+    c.car.position.set(x, (hF + hR) / 2, z); c.car.rotation.set(Math.atan((hF - hR) / 4.6), psi, -Math.atan((hL - hRt) / 1.8), 'YXZ'); return (hF - hR) / 4.6;
   }
+  // zaparkovaná auta na parkovišti (jako na snímku) a provoz
+  const circ = (x, z, psi) => [-1.5, 0, 1.5].map(o => [x - Math.sin(psi) * o, z - Math.cos(psi) * o]);
+  const hit = (a, b) => { for (const p of a) for (const q of b) { const dx = p[0] - q[0], dz = p[1] - q[1]; if (dx * dx + dz * dz < 3.6) return [dx, dz]; } return null; };
+  const parked = [[-22, 0xe9e9e9], [-13, 0xb8bcc0], [-9, 0x7a1f1f]].map(([e, col]) => { const c = buildCar(col, { detail: false, rust: false }), w = at(e, 21.5); pose(c, w[0], w[1], 0); return { circ: circ(w[0], w[1], 0) }; });
+  const npcs = [[0xb02a2a, 'A'], [0x2d4f9e, 'B'], [0xe6e6e6, 'A'], [0x2a2d30, 'B'], [0x19a7e0, 'B', true], [0x4b7a4b, 'A']].map(([col, lane, w]) => {
+    const n = { c: buildCar(col, { detail: false, rust: false, wolt: w }), lane, on: false, x: 0, z: 0, psi: 0, v: 0, wh: 0 }; n.c.car.visible = false; return n;
+  });
 
   /* ---------- kouř a rez ---------- */
   const puffTex = tex(cvs(64, 64, g => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }));
   const puffs = []; for (let i = 0; i < 30; i++) { const s = new T.Sprite(new T.SpriteMaterial({ map: puffTex, transparent: true, depthWrite: false, opacity: 0 })); s.userData = { life: 0, vy: 0 }; scene.add(s); puffs.push(s); }
   let pi = 0; const tmpV = new T.Vector3();
   function puff(rust) {
-    const s = puffs[pi++ % puffs.length]; car.localToWorld(tmpV.set(-2.4, .35, .55)); s.position.copy(tmpV);
+    const s = puffs[pi++ % puffs.length]; P.model.localToWorld(tmpV.set(-2.45, .35, -.48)); s.position.copy(tmpV);
     s.material.color.set(rust ? 0x9a4a22 : 0x77797c); s.userData.life = 1; s.userData.vy = rust ? -.4 : .9; s.scale.setScalar(.3);
   }
 
   /* ---------- stav hry ---------- */
-  const keys = { gas: 0, brake: 0, blink: 0 }; let st, skin = 'classic', last = 0, vis = true;
+  const keys = { gas: 0, brake: 0, left: 0, right: 0, tap: 0 }; let st, skin = 'classic', last = 0, vis = true;
   const look = new T.Vector3(), cpos = new T.Vector3(); let camInit = false;
   function reset() {
-    st = { mode: 'idle', x: 0, z: 34, psi: 0, v: 0, fuel: 6, time: 0, t: 0, blink: 0, sleep: 0, wheel: 0, rust: false, tip: '', tipT: 0, sleepT: 0, checked: false, phi: 0, park: 0, done: 0, B: false };
+    st = { mode: 'idle', x: 1.75, z: 34, psi: 0, v: 0, fuel: 6, time: 0, t: 0, blink: false, sig: false, penalty: 0, steer: 0, delta: 0, revT: 0, sleep: 0, wheel: 0, rust: false, tip: '', tipT: 0, sleepT: 0, done: 0, B: false, bumpT: 0, tA: 3, tB: 2 };
+    npcs.forEach(n => { n.on = false; n.c.car.visible = false; });
     setNight(0); $('g-sleep').classList.remove('on'); camInit = false; applySkin(skin);
   }
   function end(title, text) { st.mode = 'over'; st.v = 0; say(title, text, 'Zkusit znovu'); }
+  function tip(s, t) { st.tip = s; st.tipT = t; }
+  function spawn(lane) {
+    const n = npcs.find(q => !q.on && q.lane === lane); if (!n) return;
+    n.on = true; n.v = 15 + Math.random() * 7; n.wh = 0;
+    if (lane === 'A') { n.x = -1.75; n.psi = Math.PI; n.z = Math.max(st.z - 240, -585); } else { n.z = ZB - 1.75; n.psi = Math.PI / 2; n.x = Math.min((st.B ? st.x : 100) + 260, 640); }
+    n.c.car.visible = true;
+  }
 
   function update(dt) {
-    st.t += dt; if (st.tipT > 0) st.tipT -= dt;
-    const driving = st.mode === 'drive' || st.mode === 'turn';
-    if (driving) {
-      st.time += dt;
-      const gas = keys.gas, fz = -Math.cos(st.psi), slope = dprof(st.z) * fz;
-      if (st.fuel > 0) { st.fuel = Math.max(0, st.fuel - dt * gas * .22); if (st.fuel === 0) { st.rust = true; st.tip = 'Došla nafta! Oktávka jede na rez.'; st.tipT = 4; } }
-      let a = gas * (st.fuel > 0 ? 7.5 : 3.9) - .27 * st.v - .6 - slope * 20 - keys.brake * 13;
-      if (st.v <= 0 && a < 0) a = 0; st.v = Math.max(0, st.v + a * dt); st.wheel += st.v * dt / .32;
-      if (keys.blink) { st.blink = 3; keys.blink = 0; } if (st.blink > 0) st.blink -= dt;
-      if (gas && Math.random() < dt * 14) puff(false); else if (st.rust && Math.random() < dt * 8) puff(true);
-      if (st.mode === 'drive') {
-        st.x += -Math.sin(st.psi) * st.v * dt; st.z += -Math.cos(st.psi) * st.v * dt;
-        if (!st.B) {
-          if (!st.checked && st.z <= -600) {
-            st.checked = true;
-            if (st.blink > 0 && st.v < 19) { st.mode = 'turn'; st.phi = 0; st.tip = ''; }
-            else { st.tip = st.blink > 0 ? 'Moc rychle! Brzdi dřív.' : 'Blinkr jsi nezapnul včas.'; st.tipT = 3; }
-          }
-          if (st.z < -626) end('Vjel jsi do křoví', 'Státovku jsi minul. Příště zpomal, zapni blinkr dřív a odboč vlevo.');
-        } else {
-          if (Math.abs(st.x - XS) < 14 && st.v < 1.6) { st.mode = 'sleep'; st.v = 0; st.tipT = 0; st.x0 = st.x; }
-          else if (st.x < XS - 60) end('Minul jsi benzinku', 'Za KM Pronou je jen pole a rez. Zkus to znovu.');
-        }
+    st.t += dt; skyU.time.value = st.t; if (st.tipT > 0) st.tipT -= dt; if (st.bumpT > 0) st.bumpT -= dt;
+    const fx = -Math.sin(st.psi), fz = -Math.cos(st.psi);
+    const slope = (ground(st.x + fx * 2.3, st.z + fz * 2.3) - ground(st.x - fx * 2.3, st.z - fz * 2.3)) / 4.6;
+    if (st.mode === 'drive') {
+      st.time += dt; const gas = keys.gas;
+      if (keys.tap) { st.blink = !st.blink; keys.tap = 0; }
+      if (st.fuel > 0) { st.fuel = Math.max(0, st.fuel - dt * gas * .22); if (st.fuel === 0) { st.rust = true; tip('Došla nafta! Oktávka jede na rez.', 4); } }
+      const off = !roadAt(st.x, st.z), sg = Math.sign(st.v);
+      let a = gas * (st.fuel > 0 ? 7.5 : 3.9) - .27 * st.v - .6 * sg - slope * 20 - (off ? .5 * st.v + .8 * sg : 0);
+      if (keys.brake) { if (st.v > .3) { a -= 13; st.revT = 0; } else { st.revT += dt; if (st.revT > .4) a -= 3.2; else { st.v = 0; a = 0; } } } else st.revT = 0;
+      if (gas && st.v <= 0 && a < 0 && st.v > -.2) a = 0;
+      if (!gas && !keys.brake && Math.abs(st.v) < .4) { st.v = 0; a = 0; }
+      st.v = clamp(st.v + a * dt, -4, 40);
+      const want = (keys.left ? 1 : 0) - (keys.right ? 1 : 0); st.steer += (want - st.steer) * Math.min(1, dt * 7);
+      st.delta = st.steer * .5 / (1 + Math.abs(st.v) / 9);
+      st.psi += st.v * Math.tan(st.delta) / 2.5 * dt; st.x += fx * st.v * dt; st.z += fz * st.v * dt; st.wheel += st.v * dt / .32;
+      if (gas && Math.random() < dt * 14) puff(false); else if (st.rust && st.v > .5 && Math.random() < dt * 8) puff(true);
+      if (!st.B) {
+        if (!st.sig && st.z < -585) { st.sig = true; if (st.blink) tip('Blinkr zapnutý, výborně.', 2.5); else { st.penalty += 5; tip('Bez blinkru! +5 s trestných.', 3); } }
+        if (st.x > 14 && Math.abs(st.z - ZB) < 6) { st.B = true; st.blink = false; tip('Odbočeno na státovku. KM Prona je vlevo před tebou.', 4); }
+        if (st.z < -622 && Math.abs(st.x) < 20) end('Vjel jsi do křoví', 'Křižovatku jsi minul. Zpomal, zapni blinkr (mezerník) a zatoč doprava (D).');
+        if (st.x < -50 && Math.abs(st.z - ZB) < 6) end('Špatným směrem', 'KM Prona je na východě. Na státovku odboč doprava.');
       } else {
-        st.phi += st.v * dt / R; const p = Math.min(st.phi, Math.PI / 2);
-        st.x = -R + R * Math.cos(p); st.z = -600 - R * Math.sin(p); st.psi = p;
-        if (st.phi >= Math.PI / 2) { st.mode = 'drive'; st.B = true; st.x = -R; st.z = ZB; st.psi = Math.PI / 2; st.tip = 'Odbočeno na státovku. KM Prona je před tebou.'; st.tipT = 3.5; }
+        if (Math.abs(st.x - BX) < 1.1 && Math.abs(st.z - BZ) < 2 && Math.abs(Math.cos(st.psi)) > .9 && Math.abs(st.v) < 1.2) { st.mode = 'sleep'; st.v = 0; st.tipT = 0; }
+        else if (st.x > SX + 100 && onB(st.x, st.z)) end('Minul jsi benzinku', 'KM Prona zůstala za tebou. Odbočka je vlevo před benzinkou.');
+        else if (st.x < -50) end('Špatným směrem', 'Jedeš zpátky. KM Prona je na východě.');
       }
+      if ((dRoad(st.x, st.z) > 45 && dStat(st.x, st.z) > 3) || st.z > 90) end('Sjel jsi z cesty', 'Oktávka ráda jezdí po silnici. Zkus to znovu a drž se asfaltu.');
+      // srážky: zaparkovaná auta jen ubírají čas, provoz znamená bouračku
+      const me = circ(st.x, st.z, st.psi);
+      for (const p of parked) { const h = hit(me, p.circ); if (h) { const l = Math.hypot(h[0], h[1]) || 1, push = 1.95 - l; st.x += h[0] / l * push; st.z += h[1] / l * push; st.v = 0; if (st.bumpT <= 0) { st.penalty += 3; st.bumpT = 1.5; tip('Šrám o zaparkované auto! +3 s.', 2.5); } } }
     } else if (st.mode === 'sleep') {
-      st.sleep = Math.min(1, st.sleep + dt / 4); st.sleepT += dt; st.park = Math.min(1, st.park + dt / 1.6);
-      const e = st.park * st.park * (3 - 2 * st.park); st.z = lerp(ZB, BAY, e); st.psi = Math.PI / 2 + Math.sin(Math.PI * e) * .45; st.x = st.x0 - Math.sin(Math.PI * e) * 2.2;
-      setNight(sm(0, 1, st.sleep)); $('g-sleep').classList.toggle('on', st.sleep > .4);
+      st.sleep = Math.min(1, st.sleep + dt / 4); st.sleepT += dt; st.v = 0; setNight(sm(0, 1, st.sleep)); $('g-sleep').classList.toggle('on', st.sleep > .4);
       if (st.sleepT > 8 && !st.done) {
         st.done = 1; const j = ['Kotlik chrápe jako kotel v únoru.', 'Ráno ho čeká výměna sifonu a rozvaděč.', 'Oktávka tiká, chladne a drží pohromadě jen z cti.', 'Po probuzení si objedná Wolt sám sobě.'];
-        say('Kotlik se vyspal', `Cesta z Vrbčan: ${st.time.toFixed(0)} s. ${st.rust ? 'Dojel jsi na rez.' : 'Dojel jsi na poslední kapky nafty.'}<br>${j[Math.floor(Math.random() * j.length)]}`, 'Jet znovu', true);
+        const tt = st.time + st.penalty;
+        say('Kotlik se vyspal', `Cesta z Vrbčan: ${tt.toFixed(0)} s${st.penalty ? ` (z toho ${st.penalty} s trestných)` : ''}. ${st.rust ? 'Dojel jsi na rez.' : 'Dojel jsi na poslední kapky nafty.'}<br>${j[Math.floor(Math.random() * j.length)]}`, 'Jet znovu', true);
       }
     }
+    // provoz
+    if (st.mode === 'drive' || st.mode === 'sleep') {
+      st.tA -= dt; st.tB -= dt;
+      if (st.tA <= 0) { st.tA = 5 + Math.random() * 6; if (!st.B && st.z > -560) spawn('A'); }
+      if (st.tB <= 0) { st.tB = 3.5 + Math.random() * 4; if (st.z < -480 || st.B) spawn('B'); }
+    }
+    for (const n of npcs) if (n.on) {
+      n.x += -Math.sin(n.psi) * n.v * dt; n.z += -Math.cos(n.psi) * n.v * dt; n.wh += n.v * dt / .32;
+      pose(n.c, n.x, n.z, n.psi); n.c.wheels.forEach(w => w.g.rotation.z = -n.wh);
+      if ((n.lane === 'A' && (n.z > Math.min(70, st.z + 90))) || (n.lane === 'B' && n.x < (st.B ? st.x - 90 : -70))) { n.on = false; n.c.car.visible = false; continue; }
+      if (st.mode === 'drive' && hit(circ(st.x, st.z, st.psi), circ(n.x, n.z, n.psi))) end('Bouračka!', 'Do cesty ti vjelo protijedoucí auto. Před odbočením vlevo dej přednost a drž se v pruhu.');
+    }
     for (const s of puffs) if (s.userData.life > 0) { s.userData.life -= dt * .6; s.position.y += s.userData.vy * dt; s.scale.addScalar(dt * 1.6); s.material.opacity = Math.max(0, s.userData.life) * .5; }
-    // auto
-    const fz2 = -Math.cos(st.psi), pitch = Math.atan(dprof(st.z) * fz2), bob = st.v > 1 ? Math.sin(st.wheel * 1.3) * (st.rust ? .02 : .008) : 0;
-    car.position.set(st.x, prof(st.z), st.z); car.rotation.set(pitch - keys.brake * .012 * Math.min(1, st.v / 10), st.psi, 0, 'YXZ');
-    rig.position.y = bob; rig.rotation.z = st.mode === 'turn' ? -.03 * st.v / 15 : 0;
-    wheels.forEach(w => w.rotation.x = -st.wheel);
-    tail.emissiveIntensity = keys.brake && st.mode === 'drive' ? 2.6 : .35;
+    // hráčovo auto
+    const bob = st.v > 1 ? Math.sin(st.wheel * 1.3) * (st.rust ? .02 : .008) : 0;
+    pose(P, st.x, st.z, st.psi); car.rotation.x -= keys.brake && st.v > 2 ? .012 : 0;
+    rig.position.y = bob; rig.rotation.z = -st.steer * st.v * .0035;
+    wheels.forEach(w => { w.g.rotation.z = -st.wheel; w.g.rotation.y = w.front ? st.delta : 0; });
+    tail.emissiveIntensity = keys.brake && st.v > .5 ? 2.6 : .35;
+    indL.emissiveIntensity = indR.emissiveIntensity = 0; if (st.blink && Math.floor(st.t * 3) % 2 === 0) { indR.emissiveIntensity = 3; indL.emissiveIntensity = 3; }
     // kamera
-    const f = new T.Vector3(-Math.sin(st.psi), 0, -Math.cos(st.psi)), cy = prof(st.z), want = new T.Vector3(), tgt = new T.Vector3();
-    if (st.mode === 'idle' || st.mode === 'over' && false) {
-      const a = st.t * .25 + 2; want.set(st.x + Math.sin(a) * 6.5, cy + 1.7, st.z + Math.cos(a) * 6.5); tgt.set(st.x, cy + 1, st.z);
-    } else if (st.mode === 'sleep') {
-      want.set(st.x - 3.5 + Math.sin(st.t * .2) * 2, cy + 1.9, st.z - 9.5); tgt.set(st.x, cy + 2.2, st.z + 2);
-    } else {
-      want.set(st.x - f.x * (7.2 + st.v * .05), cy + 3 + st.v * .02, st.z - f.z * (7.2 + st.v * .05)); tgt.set(st.x + f.x * 12, cy + 1.4, st.z + f.z * 12);
+    const cy = car.position.y, f = new T.Vector3(fx, 0, fz), want = new T.Vector3(), tgt = new T.Vector3();
+    if (st.mode === 'idle') { const a = st.t * .25 + 2; want.set(st.x + Math.sin(a) * 6.5, cy + 1.7, st.z + Math.cos(a) * 6.5); tgt.set(st.x, cy + 1, st.z); }
+    else if (st.mode === 'sleep') { want.set(st.x - 4 + Math.sin(st.t * .2) * 2, cy + 2.4, st.z + 10); tgt.set(st.x + 2, cy + 2.6, st.z - 8); }
+    else {
+      const d = 7.2 + Math.max(0, st.v) * .05; want.set(st.x - f.x * d, cy + 3 + st.v * .02, st.z - f.z * d); tgt.set(st.x + f.x * 12, cy + 1.4, st.z + f.z * 12);
       if (st.rust && st.v > 1) { want.x += (Math.random() - .5) * .04; want.y += (Math.random() - .5) * .04; }
     }
     if (!camInit) { cpos.copy(want); look.copy(tgt); camInit = true; }
     const k = 1 - Math.exp(-dt * (st.mode === 'sleep' ? 1.2 : 5)); cpos.lerp(want, k); look.lerp(tgt, k); camera.position.copy(cpos); camera.lookAt(look);
-    camera.fov = 52 + Math.min(st.v, 28) * .35; camera.updateProjectionMatrix();
+    camera.fov = 52 + Math.min(Math.abs(st.v), 28) * .35; camera.updateProjectionMatrix();
     sun.target.position.copy(car.position); sun.position.copy(car.position).addScaledVector(SUN, 90);
     moonL.position.copy(car.position).add(skyU.moon.value.clone().multiplyScalar(90)); moonL.target.position.copy(car.position); moonL.target.updateMatrixWorld();
     sky.position.copy(camera.position);
     hud();
   }
 
-  const hSpd = $('h-spd'), hFuel = $('h-fuel'), hFuelT = $('h-fuelt'), hProg = $('h-prog'), hTip = $('h-tip');
+  const hSpd = $('h-spd'), hFuel = $('h-fuel'), hFuelT = $('h-fuelt'), hProg = $('h-prog'), hTip = $('h-tip'), hBlink = $('h-blink');
   function hud() {
-    hSpd.textContent = Math.round(st.v * 3.6); hFuel.style.width = (st.fuel > 0 ? st.fuel / 6 * 100 : 100) + '%'; hFuel.classList.toggle('rust', st.fuel <= 0);
-    hFuelT.textContent = st.fuel > 0 ? `Nafta ${st.fuel.toFixed(1)} %` : 'Nafta 0 %, jedeš na rez';
-    const p = !st.B ? clamp((34 - st.z) / 634, 0, 1) * .5 : .5 + clamp((-st.x - 9) / (-XS - 9), 0, 1) * .5; hProg.style.left = p * 100 + '%';
+    hSpd.textContent = Math.round(Math.abs(st.v) * 3.6); hFuel.style.width = (st.fuel > 0 ? st.fuel / 6 * 100 : 100) + '%'; hFuel.classList.toggle('rust', st.fuel <= 0);
+    hFuelT.textContent = st.fuel > 0 ? `Nafta ${st.fuel.toFixed(1)} %` : 'Nafta 0 %, jedeš na rez'; hBlink.classList.toggle('on', st.blink);
+    const p = !st.B ? clamp((34 - st.z) / 643, 0, 1) * .5 : .5 + clamp((st.x - 14) / (SX - 14), 0, 1) * .5; hProg.style.left = p * 100 + '%';
     let s = '';
-    if (st.mode === 'drive' || st.mode === 'turn') {
+    if (st.mode === 'drive') {
       if (st.tipT > 0) s = st.tip;
-      else if (st.time < 5) s = 'Drž plyn (→ nebo D) a jeď z Vrbčan do kopce';
-      else if (!st.B && st.z < -380 && st.blink <= 0) s = 'Křižovatka se blíží. Zpomal (←), zapni blinkr (↑ nebo mezerník) a odboč vlevo.';
-      else if (st.B && st.x > XS - 60 && st.x < XS + 220) s = 'KM Prona vlevo. Zabrzdi (← nebo S) v zeleném poli.';
+      else if (st.time < 6) s = 'W plyn, S brzda a zpátečka, A/D zatáčení, mezerník blinkr';
+      else if (!st.B && st.z < -380 && st.z > -585 && !st.blink) s = 'Křižovatka. Zpomal (S), zapni blinkr (mezerník) a zatoč vpravo (D).';
+      else if (st.B && st.x > SX - 80 && st.x < SX + 90 && st.z > ZB - 5) s = 'KM Prona vlevo. Zapni blinkr, dej přednost protijedoucím a odboč vlevo (A).';
+      else if (st.B && onApron(st.x, st.z)) s = 'Zajeď do zeleného pole u značky P. Zpátečka: drž S.';
     }
     hTip.textContent = s; hTip.classList.toggle('on', !!s);
   }
 
-  /* ---------- ovládání ---------- */
-  const map = { ArrowRight: 'gas', KeyD: 'gas', ArrowLeft: 'brake', KeyA: 'brake', KeyS: 'brake', ArrowDown: 'brake' };
+  /* ---------- ovládání: WASD + mezerník ---------- */
+  const map = { KeyW: 'gas', ArrowUp: 'gas', KeyS: 'brake', ArrowDown: 'brake', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right' };
   addEventListener('keydown', e => {
-    if (st.mode !== 'drive' && st.mode !== 'turn') return;
+    if (st.mode !== 'drive') return;
     if (map[e.code]) { keys[map[e.code]] = 1; e.preventDefault(); }
-    if (['ArrowUp', 'KeyW', 'Space'].includes(e.code)) { keys.blink = 1; e.preventDefault(); }
+    if (e.code === 'Space') { if (!e.repeat) keys.tap = 1; e.preventDefault(); }
   });
   addEventListener('keyup', e => { if (map[e.code]) keys[map[e.code]] = 0; });
   document.querySelectorAll('.g-pad button').forEach(b => {
     const k = b.dataset.k;
     b.addEventListener('pointerdown', e => { e.preventDefault(); keys[k] = 1; });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, () => { if (k !== 'blink') keys[k] = 0; }));
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, () => { if (k !== 'tap') keys[k] = 0; }));
   });
   document.querySelectorAll('.g-skins button').forEach(b => b.addEventListener('click', () => {
     skin = b.dataset.skin; applySkin(skin); document.querySelectorAll('.g-skins button').forEach(x => x.classList.toggle('on', x === b));
