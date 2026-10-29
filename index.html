@@ -123,49 +123,79 @@
         <button class="btn btn-main" id="g-start">Jet</button>
       </div>
 
-      <!-- GRAND THEFT KOTLIK: úvodní intro -->
+      <!-- GRAND THEFT KOTLIK: menu jako PlayStation 4 + intro. Nic se nespustí, dokud nedáš Start a pak Play. -->
       <div class="gi" id="g-intro">
-        <div class="gi-bg">
-          <div class="gi-sun"></div>
-          <svg class="gi-hills" viewBox="0 0 960 200" preserveAspectRatio="none"><path fill="#3a0f4d" d="M0 200V90C90 40 170 60 260 100s170 20 250-20 150-50 250 10 140 30 200-10v130z"/><path fill="#1c0830" d="M0 200V130c110-40 210-10 320 20s200 10 300-20 220-20 340 20v50z"/></svg>
-          <div class="gi-road"></div>
-          <svg class="gi-car" viewBox="0 0 220 80"><g fill="#0b0412"><path d="M10 52c0-8 6-12 16-14l30-6 18-18h70l24 18c22 2 36 8 40 18v10H10z"/><circle cx="58" cy="60" r="16"/><circle cx="168" cy="60" r="16"/></g><g fill="#ffb347"><circle cx="58" cy="60" r="6"/><circle cx="168" cy="60" r="6"/><path d="M92 20h40l14 14H84z" opacity=".35"/></g><rect x="176" y="46" width="30" height="4" fill="#ff4fa3"/></svg>
-        </div>
+        <div class="gi-flash"></div>
 
+        <!-- 1) menu -->
         <div class="gi-scene on" data-s="menu">
-          <div class="gi-xmb">
-            <div class="gi-wave"></div>
-            <div class="gi-xtop"><span>◉ Kotlik Station</span><span id="gi-clock">12:00</span></div>
-            <div class="gi-xcat">Hry</div>
-            <div class="gi-tiles">
-              <button class="gi-tile t1" data-title="Kotle: Servisní simulátor" data-sub="Zatím nevyšlo. Kotlik ještě utahuje poslední šroub."><b>KOTLE</b></button>
-              <button class="gi-tile t2 sel" data-main="1" data-title="Grand Theft Kotlik" data-sub="Oktávka Edition · 1 hráč · Vrbčany → KM Prona"><i>GTK</i><b>GRAND THEFT KOTLIK</b></button>
-              <button class="gi-tile t3" data-title="Záchodový závodník" data-sub="Zatím nevyšlo. Čeká se na dodání splachovače."><b>ZÁCHODY</b></button>
+          <div class="gi-xmb" id="gi-xmb">
+            <canvas class="gi-dots" id="gi-dots"></canvas>
+            <div class="gi-xtop">
+              <span class="gi-news"><span class="gi-plus">✚</span><span>Nainstalováno: Oktávka, verze 1.07 (rez přidána)</span></span>
+              <span class="gi-user"><span class="gi-av"></span><span>Kotlik</span></span>
+              <span class="gi-clock" id="gi-clock">12:00</span>
             </div>
-            <div class="gi-xinfo">
-              <h6 id="gi-xtitle">Grand Theft Kotlik</h6>
-              <p id="gi-xsub">Oktávka Edition · 1 hráč · Vrbčany → KM Prona</p>
-              <button class="btn btn-main" id="gi-hrat">▶ HRÁT</button>
-              <small>◀ ▶ výběr · Enter = hrát · F = celá obrazovka</small>
+
+            <div class="gi-row" id="gi-row">
+              <button class="gi-tile t-store sel" data-main="1" data-title="Kotlik Store" data-sub="Grand Theft Kotlik · Oktávka Edition · Vrbčany → KM Prona" data-label="Start">
+                <span class="gi-ph"></span><span class="gi-badge">KOTLIK STORE</span><span class="gi-lab">Start</span>
+              </button>
+              <button class="gi-tile t-sym" data-title="Oznámení" data-sub="Žádná nová oznámení. Kotlik zrovna utahuje šroub." data-label="Otevřít">
+                <span class="gi-glyph"><i>□</i><i>△</i><i>✕</i><i>○</i></span><span class="gi-lab">Otevřít</span>
+              </button>
+              <button class="gi-tile t-fold1" data-title="Knihovna" data-sub="Kotle: Servisní simulátor a další hry, které Kotlik zatím nedodělal." data-label="Otevřít">
+                <span class="gi-col"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i></span><span class="gi-fold"></span><span class="gi-lab">Otevřít</span>
+              </button>
+              <button class="gi-tile t-fold2" data-title="Fotky z dílny" data-sub="Oktávka v celé své rezavé kráse." data-label="Otevřít">
+                <span class="gi-col"><i class="c1"></i><i class="c2"></i><i class="c3"></i><i class="c4"></i></span><span class="gi-fold"></span><span class="gi-lab">Otevřít</span>
+              </button>
+              <button class="gi-tile t-fold3" data-title="Záchodový závodník" data-sub="Zatím nevyšlo. Čeká se na dodání splachovače." data-label="Otevřít">
+                <span class="gi-fold"></span><span class="gi-lab">Otevřít</span>
+              </button>
+              <button class="gi-tile t-tv" data-title="Kotlik TV" data-sub="Dokument o tom, jak Oktávka přežila další STK." data-label="Spustit">
+                <span class="gi-tv"></span><span class="gi-nm">TV</span><span class="gi-lab">Spustit</span>
+              </button>
+              <button class="gi-tile t-wolt" data-title="Wolt" data-sub="Svíčková za dvacet minut, kotel za hodinu." data-label="Otevřít">
+                <span class="gi-wt">Wolt</span><span class="gi-lab">Otevřít</span>
+              </button>
             </div>
+
+            <div class="gi-arr l" id="gi-arl">‹</div><div class="gi-arr r">›</div>
+            <div class="gi-xtitle" id="gi-xtitle">Kotlik Store</div>
+            <div class="gi-xsub" id="gi-xsub">Grand Theft Kotlik · Oktávka Edition · Vrbčany → KM Prona</div>
+            <div class="gi-xhint">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><ellipse cx="12" cy="12" rx="4.2" ry="10"/><path d="M2 12h20M4 6.5h16M4 17.5h16"/></svg>
+              <span>Připojeno k Oktávce.</span>
+            </div>
+            <div class="gi-keys">◀ ▶ výběr · Enter nebo klik na dlaždici = Start · F = celá obrazovka</div>
             <div class="gi-toast" id="gi-toast"></div>
           </div>
         </div>
 
+        <!-- 2) Kotlik Games uvádí -->
         <div class="gi-scene" data-s="pres">
           <div class="gi-pres"><small>KOTLIK GAMES</small><b id="gi-type"></b></div>
         </div>
 
+        <!-- 3) komiksové panely -->
         <div class="gi-scene" data-s="panels">
           <div class="gi-panels">
             <figure class="gi-p p1" style="--i:0"><span>KOTLE</span><em>„Zaklepe kotel, zaklepu já.“</em></figure>
-            <figure class="gi-p p2" style="--i:1"><span>ZÁCHODY</span><em>Nikomu to nepovím.</em></figure>
+            <figure class="gi-p p2" style="--i:1"><span>WOLT</span><em>Svíčková za dvacet minut.</em></figure>
             <figure class="gi-p p3" style="--i:2"><span>ELEKTRO</span><em>Svítím lidem, ne do očí.</em></figure>
             <figure class="gi-p p4" style="--i:3"><span>OKTÁVKA</span><em>94 % rez. 6 % nafta.</em></figure>
           </div>
         </div>
 
+        <!-- 4) titulek -->
         <div class="gi-scene" data-s="title">
+          <div class="gi-bg">
+            <div class="gi-sun"></div>
+            <svg class="gi-hills" viewBox="0 0 960 200" preserveAspectRatio="none"><path fill="#3a0f4d" d="M0 200V90C90 40 170 60 260 100s170 20 250-20 150-50 250 10 140 30 200-10v130z"/><path fill="#1c0830" d="M0 200V130c110-40 210-10 320 20s200 10 300-20 220-20 340 20v50z"/></svg>
+            <div class="gi-road"></div>
+            <svg class="gi-car" viewBox="0 0 220 80"><g fill="#0b0412"><path d="M10 52c0-8 6-12 16-14l30-6 18-18h70l24 18c22 2 36 8 40 18v10H10z"/><circle cx="58" cy="60" r="16"/><circle cx="168" cy="60" r="16"/></g><g fill="#ffb347"><circle cx="58" cy="60" r="6"/><circle cx="168" cy="60" r="6"/><path d="M92 20h40l14 14H84z" opacity=".35"/></g><rect x="176" y="46" width="30" height="4" fill="#ff4fa3"/></svg>
+          </div>
           <div class="gi-logo">
             <small>KOTLIK GAMES PRESENTS</small>
             <h4>GRAND THEFT</h4>
