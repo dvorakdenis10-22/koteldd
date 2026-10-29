@@ -1,4 +1,4 @@
-// Grand Theft Kotlik: intro + fullscreen (načítá se po game.js)
+// Grand Theft Kotlik: výběr hry (jako PlayStation) -> HRÁT -> intro -> Play + fullscreen
 (() => {
   const intro = document.getElementById('g-intro'), box = document.querySelector('.game-box');
   if (!intro || !box) return;
@@ -26,29 +26,52 @@
   document.addEventListener('fullscreenchange', onFsChange);
   document.addEventListener('webkitfullscreenchange', onFsChange);
   document.getElementById('g-fs').addEventListener('click', toggleFs);
-  addEventListener('keydown', e => {
-    if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey) toggleFs();
-    if (e.code === 'Escape' && pseudo) exitFs();
-  });
+
+  // klávesy fungují jen když je herní okno vidět (aby nebrzdily scrollování stránky)
+  let inView = false;
+  new IntersectionObserver(e => { inView = e[0].isIntersecting && e[0].intersectionRatio >= .5; }, { threshold: [0, .5, 1] }).observe(box);
+
+  /* ---------- stav ---------- */
+  let state = 'menu';   // menu -> intro -> done
+  let timers = [], loading = false, fast = false;
+  const at = (f, ms) => timers.push(setTimeout(f, ms));
+  const show = n => {
+    intro.querySelectorAll('.gi-scene').forEach(e => e.classList.toggle('on', e.dataset.s === n));
+    intro.classList.toggle('t', n === 'title');
+  };
 
   /* ---------- fotka Oktávky do panelu ---------- */
   const ph = document.querySelector('img[data-photo="oktavka"]'), p4 = $('.p4');
   if (ph && ph.src && p4) p4.style.backgroundImage = `url("${ph.src}")`;
 
-  /* ---------- časová osa ---------- */
-  const show = n => {
-    intro.querySelectorAll('.gi-scene').forEach(e => e.classList.toggle('on', e.dataset.s === n));
-    intro.classList.toggle('t', n === 'title');
-  };
-  let timers = [], loading = false, fast = false, ended = false;
-  const at = (f, ms) => timers.push(setTimeout(f, ms));
+  /* ---------- menu jako na PlayStationu ---------- */
+  const clock = $('#gi-clock');
+  const tick = () => { const d = new Date(); clock.textContent = d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
+  tick(); setInterval(tick, 20000);
 
+  const tiles = [...intro.querySelectorAll('.gi-tile')], toast = $('#gi-toast');
+  let sel = tiles.findIndex(t => t.classList.contains('sel')), toastT;
+  function select(i) {
+    sel = (i + tiles.length) % tiles.length;
+    tiles.forEach((t, k) => t.classList.toggle('sel', k === sel));
+    $('#gi-xtitle').textContent = tiles[sel].dataset.title;
+    $('#gi-xsub').textContent = tiles[sel].dataset.sub;
+    $('#gi-hrat').style.display = tiles[sel].dataset.main ? '' : 'none';
+  }
+  function say(t) { toast.textContent = t; toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), 2200); }
+  tiles.forEach((t, k) => t.addEventListener('click', () => {
+    if (k !== sel) { select(k); if (!t.dataset.main) say('Tuhle hru Kotlik ještě nedodělal.'); }
+    else if (t.dataset.main) startIntro();
+    else say('Tuhle hru Kotlik ještě nedodělal.');
+  }));
+  $('#gi-hrat').addEventListener('click', startIntro);
+
+  /* ---------- intro (spustí se až po HRÁT) ---------- */
   function typeText(el, txt, speed) {
     let i = 0;
     const iv = setInterval(() => { el.textContent = txt.slice(0, ++i); if (i >= txt.length) clearInterval(iv); }, speed);
     timers.push(iv);
   }
-
   const msgs = ['Načítání rzi…', 'Dolévání nafty (6 %)…', 'Utahování lepicí pásky…', 'Odvzdušňování radiátorů…', 'Hledání parkoviště u KM Prona…'];
   function load() {
     if (loading) return; loading = true;
@@ -63,30 +86,41 @@
       }
     }, 70);
   }
-
-  at(() => typeText($('#gi-type'), 'uvádí…', 140), 900);
-  at(() => show('panels'), 3600);
-  at(() => { show('title'); at(load, 2500); }, 3600 + 4200);
-
+  function startIntro() {
+    if (state !== 'menu' || !tiles[sel].dataset.main) return;
+    state = 'intro'; intro.classList.add('run');
+    show('pres');
+    at(() => typeText($('#gi-type'), 'uvádí…', 140), 900);
+    at(() => show('panels'), 3600);
+    at(() => { show('title'); at(load, 2500); }, 3600 + 4200);
+  }
   $('#gi-skip').addEventListener('click', () => {
     timers.forEach(t => { clearTimeout(t); clearInterval(t); }); timers = [];
     fast = true; show('title');
-    // při přeskočení nečekáme na animace titulku
     intro.querySelectorAll('.gi-logo small,.gi-logo h4,.gi-logo h5,.gi-ribbon,.gi-load').forEach(e => { e.style.animationDelay = '0s'; });
     load();
   });
 
   /* ---------- Play ---------- */
   function play(fs) {
-    if (ended || !$('.gi-play').classList.contains('on')) return;
-    ended = true;
+    if (state !== 'intro' || !$('.gi-play').classList.contains('on')) return;
+    state = 'done';
     if (fs) enterFs();
     intro.classList.add('out');
-    removeEventListener('keydown', onKey);
     setTimeout(() => { const b = document.getElementById('g-start'); if (b) b.focus({ preventScroll: true }); }, 950);
   }
-  const onKey = e => { if (e.code === 'Enter') { e.preventDefault(); play(false); } };
-  addEventListener('keydown', onKey);
   $('#gi-play').addEventListener('click', () => play(false));
   $('#gi-playfs').addEventListener('click', () => play(true));
+
+  /* ---------- klávesy ---------- */
+  addEventListener('keydown', e => {
+    if (e.code === 'KeyF' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && (inView || box.classList.contains('pfs'))) toggleFs();
+    if (e.code === 'Escape' && pseudo) exitFs();
+    if (state === 'done' || !(inView || box.classList.contains('pfs'))) return;
+    if (state === 'menu') {
+      if (e.code === 'ArrowLeft') { e.preventDefault(); select(sel - 1); }
+      else if (e.code === 'ArrowRight') { e.preventDefault(); select(sel + 1); }
+      else if (e.code === 'Enter') { e.preventDefault(); tiles[sel].dataset.main ? startIntro() : say('Tuhle hru Kotlik ještě nedodělal.'); }
+    } else if (state === 'intro' && e.code === 'Enter') { e.preventDefault(); play(false); }
+  });
 })();
