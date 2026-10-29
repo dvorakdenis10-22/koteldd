@@ -265,3 +265,31 @@ footer{background:#111315;color:var(--muted);text-align:center;padding:1.6rem 1r
 .game-box.pfs .g-pad{position:absolute;left:2%;right:2%;bottom:2%;margin:0;opacity:.85}
 .game-box.pfs #g-map{bottom:auto;top:70px}
 @media (hover:hover) and (pointer:fine){.game-box.pfs .g-pad{display:none}}
+
+/* ===== PlayStation-like výběr hry ===== */
+.gi-skip{display:none}.gi.run .gi-skip{display:block}
+.gi-xmb{position:absolute;inset:0;overflow:hidden;background:#001433;font-family:Barlow,sans-serif}
+.gi-wave{position:absolute;inset:0;background:linear-gradient(160deg,#001a45,#0b4fa8 60%,#2a86d8)}
+.gi-wave::before,.gi-wave::after{content:"";position:absolute;left:-30%;width:160%;height:60%;border-radius:45%;background:linear-gradient(rgba(255,255,255,.16),rgba(255,255,255,0));animation:giwave 14s linear infinite}
+.gi-wave::before{top:50%}
+.gi-wave::after{top:62%;animation-duration:22s;animation-direction:reverse;opacity:.7}
+@keyframes giwave{to{transform:rotate(360deg)}}
+.gi-xtop{position:absolute;top:1.2em;left:2em;right:2em;display:flex;justify-content:space-between;font:600 1.3em Barlow;color:#d6e8ff;text-shadow:0 .1em .4em rgba(0,0,0,.5)}
+.gi-xcat{position:absolute;top:16%;left:0;right:0;text-align:center;font:400 1.7em 'Archivo Black';letter-spacing:.2em;text-transform:uppercase;color:#fff;text-shadow:0 .1em .5em rgba(0,0,0,.5)}
+.gi-tiles{position:absolute;left:0;right:0;top:30%;display:flex;gap:3.4em;justify-content:center;align-items:center}
+.gi-tile{position:relative;width:10em;aspect-ratio:1;border:0;border-radius:.9em;color:#fff;cursor:pointer;overflow:hidden;opacity:.55;transform:scale(.85);transition:transform .3s,opacity .3s,box-shadow .3s;font-family:inherit}
+.gi-tile.sel{opacity:1;transform:scale(1.4);box-shadow:0 0 0 .18em #fff,0 0 3em rgba(150,205,255,.95);animation:gisel 2s ease-in-out infinite}
+@keyframes gisel{50%{box-shadow:0 0 0 .18em #fff,0 0 4.5em rgba(150,205,255,.6)}}
+.gi-tile b{position:absolute;left:.5em;right:.5em;bottom:.5em;font:400 .85em 'Archivo Black';text-align:left;line-height:1.1;text-shadow:.07em .07em 0 #000}
+.gi-tile i{position:absolute;left:0;right:0;top:18%;font:400 3.6em 'Archivo Black';font-style:normal;letter-spacing:.02em;background:linear-gradient(#fff,#ff4fa3 60%,#ff9a3c);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(.05em .05em 0 #000)}
+.t1{background:linear-gradient(160deg,#e0733a,#5a1e0c)}
+.t2{background:linear-gradient(#240a45 0,#7a1b6b 40%,#ff3d81 68%,#ffb347)}
+.t3{background:linear-gradient(160deg,#19a7e0,#05283f)}
+.gi-xinfo{position:absolute;left:0;right:0;bottom:8%;display:flex;flex-direction:column;align-items:center;gap:.5em;text-align:center}
+.gi-xinfo h6{font:400 2em 'Archivo Black';color:#fff;text-shadow:0 .1em .4em rgba(0,0,0,.6)}
+.gi-xinfo p{font:500 1.15em Barlow;color:#d6e8ff;max-width:30em}
+.gi-xinfo .btn{font-size:1.4em;margin-top:.3em;animation:giplay 1.2s infinite}
+.gi-xinfo small{font:600 .95em Barlow;color:#9fc4ee;margin-top:.2em}
+.gi-toast{position:absolute;left:50%;bottom:2.5%;transform:translate(-50%,1em);padding:.5em 1.4em;border-radius:99px;background:rgba(0,0,0,.7);border:1px solid #9fc4ee;font:600 1.1em Barlow;opacity:0;transition:.3s;pointer-events:none;white-space:nowrap}
+.gi-toast.on{opacity:1;transform:translate(-50%,0)}
+@media (max-width:600px){.gi-tiles{gap:2em}.gi-tile:not(.sel){display:none}.gi-xtop{font-size:1em}}
