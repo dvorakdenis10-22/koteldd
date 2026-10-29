@@ -181,3 +181,6 @@ footer{background:#111315;color:var(--muted);text-align:center;padding:1.6rem 1r
 .g-pad button{font-size:clamp(.8rem,2.2vw,1.1rem);padding:.9rem .4rem}
 #g-map{position:absolute;right:12px;bottom:12px;width:clamp(90px,16%,150px);height:auto;border:1px solid var(--line);border-radius:10px;pointer-events:none}
 .g-pad{flex-wrap:wrap}.g-pad button{min-width:4.5em}
+.g-optrow{display:flex;align-items:center;gap:.8rem;justify-content:center;flex-wrap:wrap}
+.g-optrow>span{min-width:6rem;text-align:right;color:var(--muted);font-weight:600;text-transform:uppercase;font-size:.8rem;letter-spacing:.06em}
+@media (max-width:600px){.g-optrow>span{display:none}.g-optrow{gap:.3rem}}
