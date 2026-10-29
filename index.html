@@ -112,14 +112,17 @@
         <div class="h-route"><div class="h-line"><i id="h-prog"></i></div><div class="h-labels"><span>Vrbčany</span><span>křižovatka</span><span>KM Prona</span></div></div>
       </div>
       <div class="g-tip" id="h-tip"></div>
+      <canvas id="g-map" width="160" height="180" aria-hidden="true"></canvas>
       <div class="g-sleep" id="g-sleep"><img id="g-sleep-img" alt="Kotlik spí v Oktávce"><div class="zzz"><i>Z</i><i>Z</i><i>Z</i><i>Z</i><i>Z</i><i>Z</i></div></div>
       <div class="g-overlay" id="g-ov">
         <h3 id="g-title">Vrbčany → KM Prona</h3>
-        <p id="g-text">Jeď z vesnice do kopce, na křižovatce odboč doprava na státovku, před benzinkou vlevo a zaparkuj na P.<br>Plyn W, brzda a zpátečka S, zatáčení A a D, blinkr mezerník.</p>
-        <div class="g-skins"><button data-skin="classic" class="on">Klasická Oktávka</button><button data-skin="wolt">Wolt Oktávka</button></div>
+        <p id="g-text">Jeď z Vrbčan, na křižovatce odboč vlevo na státovku, před benzinkou se zařaď do středního pruhu, odboč vlevo a zaparkuj na P.<br>W plyn, S brzda a zpátečka, A/D zatáčení, mezerník blinkr, H klakson, C kamera, M zvuk.</p>
+        <div class="g-skins g-sk"><button data-skin="classic" class="on">Klasická Oktávka</button><button data-skin="wolt">Wolt Oktávka</button></div>
+        <div class="g-skins g-mo"><button data-mood="golden" class="on">Zlatá hodinka</button><button data-mood="noon">Poledne</button><button data-mood="fog">Mlha</button></div>
+        <div class="g-skins g-op"><button id="g-fx" class="on">Efekty: zap</button><button id="g-snd" class="on">Zvuk: zap</button></div>
         <button class="btn btn-main" id="g-start">Jet</button>
       </div>
-      <div class="g-pad"><button data-k="left">◀ A</button><button data-k="right">D ▶</button><button data-k="brake">S Brzda</button><button data-k="tap">Blinkr</button><button data-k="gas">W Plyn</button></div>
+      <div class="g-pad"><button data-k="left">◀ A</button><button data-k="right">D ▶</button><button data-k="brake">S Brzda</button><button data-k="tap">Blinkr</button><button data-k="horn">Klakson</button><button data-k="gas">W Plyn</button></div>
     </div>
   </section>
 
@@ -148,7 +151,13 @@
 
 <script src="script.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
-
