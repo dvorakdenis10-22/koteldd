@@ -122,7 +122,49 @@
         <div class="g-optrow"><span>Grafika</span><div class="g-skins g-op"><button id="g-fx" class="on">Efekty: zap</button></div></div>
         <button class="btn btn-main" id="g-start">Jet</button>
       </div>
+
+      <!-- GRAND THEFT KOTLIK: úvodní intro -->
+      <div class="gi" id="g-intro">
+        <div class="gi-bg">
+          <div class="gi-sun"></div>
+          <svg class="gi-hills" viewBox="0 0 960 200" preserveAspectRatio="none"><path fill="#3a0f4d" d="M0 200V90C90 40 170 60 260 100s170 20 250-20 150-50 250 10 140 30 200-10v130z"/><path fill="#1c0830" d="M0 200V130c110-40 210-10 320 20s200 10 300-20 220-20 340 20v50z"/></svg>
+          <div class="gi-road"></div>
+          <svg class="gi-car" viewBox="0 0 220 80"><g fill="#0b0412"><path d="M10 52c0-8 6-12 16-14l30-6 18-18h70l24 18c22 2 36 8 40 18v10H10z"/><circle cx="58" cy="60" r="16"/><circle cx="168" cy="60" r="16"/></g><g fill="#ffb347"><circle cx="58" cy="60" r="6"/><circle cx="168" cy="60" r="6"/><path d="M92 20h40l14 14H84z" opacity=".35"/></g><rect x="176" y="46" width="30" height="4" fill="#ff4fa3"/></svg>
+        </div>
+
+        <div class="gi-scene on" data-s="pres">
+          <div class="gi-pres"><small>KOTLIK GAMES</small><b id="gi-type"></b></div>
+        </div>
+
+        <div class="gi-scene" data-s="panels">
+          <div class="gi-panels">
+            <figure class="gi-p p1" style="--i:0"><span>KOTLE</span><em>„Zaklepe kotel, zaklepu já.“</em></figure>
+            <figure class="gi-p p2" style="--i:1"><span>ZÁCHODY</span><em>Nikomu to nepovím.</em></figure>
+            <figure class="gi-p p3" style="--i:2"><span>ELEKTRO</span><em>Svítím lidem, ne do očí.</em></figure>
+            <figure class="gi-p p4" style="--i:3"><span>OKTÁVKA</span><em>94 % rez. 6 % nafta.</em></figure>
+          </div>
+        </div>
+
+        <div class="gi-scene" data-s="title">
+          <div class="gi-logo">
+            <small>KOTLIK GAMES PRESENTS</small>
+            <h4>GRAND THEFT</h4>
+            <h5>KOTLIK</h5>
+            <div class="gi-ribbon">OKTÁVKA EDITION</div>
+            <div class="gi-load"><span>Načítání rzi…</span><div class="gi-bar"><i></i></div></div>
+            <div class="gi-play">
+              <button class="btn btn-main" id="gi-play">▶ Play</button>
+              <button class="btn btn-ghost" id="gi-playfs">⛶ Play celá obrazovka</button>
+              <p>Enter = Play</p>
+            </div>
+            <div class="gi-rating">POUZE PRO KOTLE A ZÁCHODY 18+ · ŽÁDNÝ KOTEL NEBYL PŘI TVORBĚ HRY POŠKOZEN</div>
+          </div>
+        </div>
+        <button class="gi-skip" id="gi-skip">Přeskočit ▸▸</button>
+      </div>
+
       <div class="g-pad"><button data-k="left">◀ A</button><button data-k="right">D ▶</button><button data-k="brake">S Brzda</button><button data-k="tap">Blinkr</button><button data-k="gas">W Plyn</button></div>
+      <button class="g-fs" id="g-fs" aria-label="Celá obrazovka (F)" title="Celá obrazovka (F)">⛶</button>
     </div>
   </section>
 
@@ -159,5 +201,6 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="game.js"></script>
+<script src="intro.js"></script>
 </body>
 </html>
