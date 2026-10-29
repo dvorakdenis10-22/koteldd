@@ -101,24 +101,25 @@
   <section class="game" id="hra">
     <div class="sec-head">
       <h2>Cesta do KM Prona</h2>
-      <p>Dovez Kotlika z Vrbčan přes kopec na státovku, odboč vlevo a vyspi se u benzinky. Nafty má Oktávka na pár vteřin, pak jede na rez.</p>
+      <p>Dovez Kotlika z Vrbčan přes kopec na státovku, odboč vlevo do KM Prona, zaparkuj na P a vyspi se. Nafty má Oktávka na pár vteřin, pak jede na rez.</p>
     </div>
     <div class="game-box">
       <canvas id="game" width="960" height="540" aria-label="3D minihra: jízda z Vrbčan na benzinku KM Prona"></canvas>
       <div class="g-hud">
         <div class="h-speed"><b id="h-spd">0</b><span>km/h</span></div>
         <div class="h-fuel"><span id="h-fuelt">Nafta 6 %</span><div class="h-bar"><i id="h-fuel"></i></div></div>
+        <div class="h-blink" id="h-blink">⬅</div>
         <div class="h-route"><div class="h-line"><i id="h-prog"></i></div><div class="h-labels"><span>Vrbčany</span><span>křižovatka</span><span>KM Prona</span></div></div>
       </div>
       <div class="g-tip" id="h-tip"></div>
       <div class="g-sleep" id="g-sleep"><img id="g-sleep-img" alt="Kotlik spí v Oktávce"><div class="zzz"><i>Z</i><i>Z</i><i>Z</i><i>Z</i><i>Z</i><i>Z</i></div></div>
       <div class="g-overlay" id="g-ov">
         <h3 id="g-title">Vrbčany → KM Prona</h3>
-        <p id="g-text">Jeď z vesnice do kopce, na státovce odboč vlevo a zaparkuj u benzinky.<br>Plyn: → nebo D. Brzda: ← nebo S. Blinkr: ↑ nebo mezerník.</p>
+        <p id="g-text">Jeď z vesnice do kopce, na křižovatce odboč doprava na státovku, před benzinkou vlevo a zaparkuj na P.<br>Plyn W, brzda a zpátečka S, zatáčení A a D, blinkr mezerník.</p>
         <div class="g-skins"><button data-skin="classic" class="on">Klasická Oktávka</button><button data-skin="wolt">Wolt Oktávka</button></div>
         <button class="btn btn-main" id="g-start">Jet</button>
       </div>
-      <div class="g-pad"><button data-k="brake">Brzda</button><button data-k="blink">Blinkr</button><button data-k="gas">Plyn</button></div>
+      <div class="g-pad"><button data-k="left">◀ A</button><button data-k="right">D ▶</button><button data-k="brake">S Brzda</button><button data-k="tap">Blinkr</button><button data-k="gas">W Plyn</button></div>
     </div>
   </section>
 
@@ -150,3 +151,4 @@
 <script src="game.js"></script>
 </body>
 </html>
+
