@@ -26,6 +26,7 @@
 
 <main id="top">
   <section class="hero">
+    <div class="lamp" aria-hidden="true"><span class="cord"></span><span class="shade"></span><span class="bulb"></span><span class="glow"></span></div>
     <div class="hero-text">
       <p class="status"><span class="dot"></span><span id="status-text">Právě opravuje kotel</span></p>
       <h1>Kotlik</h1>
@@ -103,7 +104,14 @@
       <p>Dovez Kotlika z Vrbčan přes kopec na státovku, odboč vlevo a vyspi se u benzinky. Nafty má Oktávka na pár vteřin, pak jede na rez.</p>
     </div>
     <div class="game-box">
-      <canvas id="game" width="960" height="540" aria-label="Minihra: jízda z Vrbčan na benzinku KM Prona"></canvas>
+      <canvas id="game" width="960" height="540" aria-label="3D minihra: jízda z Vrbčan na benzinku KM Prona"></canvas>
+      <div class="g-hud">
+        <div class="h-speed"><b id="h-spd">0</b><span>km/h</span></div>
+        <div class="h-fuel"><span id="h-fuelt">Nafta 6 %</span><div class="h-bar"><i id="h-fuel"></i></div></div>
+        <div class="h-route"><div class="h-line"><i id="h-prog"></i></div><div class="h-labels"><span>Vrbčany</span><span>křižovatka</span><span>KM Prona</span></div></div>
+      </div>
+      <div class="g-tip" id="h-tip"></div>
+      <div class="g-sleep" id="g-sleep"><img id="g-sleep-img" alt="Kotlik spí v Oktávce"><div class="zzz"><i>Z</i><i>Z</i><i>Z</i><i>Z</i><i>Z</i><i>Z</i></div></div>
       <div class="g-overlay" id="g-ov">
         <h3 id="g-title">Vrbčany → KM Prona</h3>
         <p id="g-text">Jeď z vesnice do kopce, na státovce odboč vlevo a zaparkuj u benzinky.<br>Plyn: → nebo D. Brzda: ← nebo S. Blinkr: ↑ nebo mezerník.</p>
@@ -138,6 +146,7 @@
 </footer>
 
 <script src="script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
