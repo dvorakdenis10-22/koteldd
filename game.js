@@ -2,8 +2,7 @@
 (() => {
   const cv = document.getElementById('game'); if (!cv) return;
   const $ = id => document.getElementById(id), T = window.THREE;
-  // !!! NAHRAĎ TENTO ŘÁDEK ŘÁDKEM "const SLEEP_IMG = ..." ZE SVÉHO STARÉHO game.js (je to ten dlouhý s base64) !!!
-  const SLEEP_IMG = <div class="g-optrow"><span>Rozlišení</span><div class="g-skins g-rs"><button data-res="low">720p</button><button data-res="high" class="on">1080p</button><button data-res="ultra">1440p</button></div></div>
+  const SLEEP_IMG = "";   // sem případně vlož "data:image/...;base64,..." se spícím Kotlikem
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v)), lerp = (a, b, t) => a + (b - a) * t;
   const sm = (a, b, x) => { x = clamp((x - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
   function say(title, text, btn, win) {
@@ -11,7 +10,7 @@
     const o = $('g-ov'); o.classList.remove('hide'); o.classList.toggle('g-win', !!win);
   }
   if (!T) { say('3D se nenačetlo', 'Hra potřebuje internet kvůli knihovně three.js. Obnov stránku.', 'OK'); return; }
-  $('g-sleep-img').src = SLEEP_IMG;
+  if (SLEEP_IMG) $('g-sleep-img').src = SLEEP_IMG; else $('g-sleep-img').style.display = 'none';
 
   /* ---------- uložená nastavení + rozlišení ---------- */
   let saved = {}; try { saved = JSON.parse(localStorage.getItem('kotlikOpts') || 'null') || {}; } catch (e) { }
