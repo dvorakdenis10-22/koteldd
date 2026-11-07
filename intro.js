@@ -10,7 +10,7 @@
      takže intro hraje i bez jediného souboru.
      ===================================================================== */
   const SND = {
-    music: '',     // hudba na pozadí celého intra (loop), např. 'audio/intro-theme.mp3'
+    music: 'intro.mp3',   // tvoje hudba (loop). Cesta je od stránky s hrou: soubor dej vedle index.html
     riser: '',     // narůstající napětí (cca 3 s)
     boom: '',      // velký dunivý úder (logo, titulek)
     hit: '',       // menší úder (panely)
@@ -60,12 +60,14 @@
      AUDIO ENGINE (WebAudio syntezátor + přehrávání vlastních souborů)
      ===================================================================== */
   let ac = null, master, lp, noiseBuf, bedStop = null, musicEl = null;
+  const musicPre = SND.music ? Object.assign(new Audio(SND.music), { preload: 'auto', loop: true }) : null;   // načte se hned při otevření stránky
+  const gainOf = () => muted ? 0 : (SND.music ? .5 : .85);   // pod hudbou jsou syntetické údery tišší
   function audio() {
     if (ac) return ac;
     try {
       ac = new (window.AudioContext || window.webkitAudioContext)();
       const comp = ac.createDynamicsCompressor();
-      master = ac.createGain(); master.gain.value = muted ? 0 : .85;
+      master = ac.createGain(); master.gain.value = gainOf();
       master.connect(comp); comp.connect(ac.destination);
       lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; lp.connect(master);
       noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
@@ -107,11 +109,12 @@
   };
   function sfx(n) {
     if (muted) return;
+    if (SND.music && !SND[n] && (n === 'riser' || n === 'stinger' || n === 'engine')) return;   // s tvou hudbou nepřidávám syntetický riser/akord/motor
     if (SND[n]) { try { const a = new Audio(SND[n]); a.play().catch(() => { }); } catch (e) { } return; }
     if (audio() && S[n]) S[n]();
   }
   function bed() {   // hudba / hluboké pozadí, které se celé intro stupňuje
-    if (SND.music) { musicEl = new Audio(SND.music); musicEl.loop = true; musicEl.muted = muted; musicEl.play().catch(() => { }); return; }
+    if (SND.music) { musicEl = musicPre; musicEl.currentTime = 0; musicEl.volume = 1; musicEl.muted = muted; musicEl.play().catch(() => { }); return; }
     if (!audio()) return;
     const t = ac.currentTime, g = ac.createGain(), f = ac.createBiquadFilter();
     f.type = 'lowpass'; f.frequency.setValueAtTime(100, t); f.frequency.exponentialRampToValueAtTime(1400, t + 12);
@@ -277,8 +280,8 @@
 /* scéna 2: panely */
 .ge-panels{display:flex;gap:.8em;width:104%;height:80%;transform:skewX(-6deg)}
 .ge-p{position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:1.2em;border:.35em solid #fff;opacity:0;transform:translateY(60%) scale(1.1);box-shadow:0 1em 3em rgba(0,0,0,.7);background-position:center;background-repeat:no-repeat}
-.ge-scene.on .ge-p{animation:gepanel .7s cubic-bezier(.2,.9,.3,1) forwards,gekb 6s linear forwards;animation-delay:calc(var(--i)*.55s + .3s)}
-.ge-scene.on .ge-p.p3{animation:gepanel .7s cubic-bezier(.2,.9,.3,1) forwards;animation-delay:calc(var(--i)*.55s + .3s)}
+.ge-scene.on .ge-p{animation:gepanel .7s cubic-bezier(.2,.9,.3,1) forwards,gekb 6s linear forwards;animation-delay:calc(var(--i)*.84s + .3s)}
+.ge-scene.on .ge-p.p3{animation:gepanel .7s cubic-bezier(.2,.9,.3,1) forwards;animation-delay:calc(var(--i)*.84s + .3s)}
 .ge-p::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(0,0,0,.35) 1.2px,transparent 1.6px) 0 0/9px 9px;mix-blend-mode:multiply}
 .ge-p::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(0,0,0,.8))}
 .ge-p span{position:relative;z-index:1;transform:skewX(6deg);font:400 2.6em 'Archivo Black',sans-serif;line-height:1;text-shadow:.07em .07em 0 #000}
@@ -294,7 +297,7 @@
 .ge-cap{position:absolute;z-index:4;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;opacity:0;pointer-events:none}
 .ge-cap b{display:inline-block;font:400 4.2em/1.05 'Archivo Black',sans-serif;background:#000;color:#fff;padding:.05em .35em;transform:skewX(-8deg);border-inline:.15em solid var(--hazard)}
 .ge-cap b:nth-of-type(2){background:var(--hazard);color:#000;margin-top:.1em}
-.ge-scene.on .ge-cap{animation:gecap .5s 3.3s cubic-bezier(.2,1.6,.4,1) forwards}
+.ge-scene.on .ge-cap{animation:gecap .5s 3.8s cubic-bezier(.2,1.6,.4,1) forwards}
 @keyframes gecap{from{opacity:0;transform:translateY(-50%) scale(3)}to{opacity:1;transform:translateY(-50%)}}
 
 /* scéna 3: titulek */
@@ -314,7 +317,7 @@
 .ge-scene.on .ge-car{animation:gecar 7s cubic-bezier(.4,0,.6,1) 1s infinite}
 @keyframes gecar{0%{left:-25%}100%{left:110%}}
 .ge-burst{position:absolute;left:50%;top:44%;width:140%;aspect-ratio:1;opacity:0;pointer-events:none;transform:translate(-50%,-50%);background:repeating-conic-gradient(rgba(255,200,230,.22) 0 3deg,transparent 3deg 9deg);-webkit-mask:radial-gradient(circle,#000,transparent 65%);mask:radial-gradient(circle,#000,transparent 65%)}
-.ge-scene.on .ge-burst{animation:gefade 1s 1.4s forwards,geburst 40s linear infinite}
+.ge-scene.on .ge-burst{animation:gefade 1s 1.3s forwards,geburst 40s linear infinite}
 @keyframes geburst{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
 .ge-logo{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;transform:translateY(-6%)}
 .ge-logo small{font:600 1.2em Barlow,sans-serif;letter-spacing:.5em;color:#ffe3f1;opacity:0}
@@ -324,7 +327,7 @@
 .ge-load,.ge-play{margin-top:1.6em;opacity:0}
 .ge-scene.on .ge-logo small{animation:gefade 1s .4s forwards}
 .ge-scene.on .ge-logo h4{animation:gein .8s .7s cubic-bezier(.2,1,.3,1) forwards}
-.ge-scene.on .ge-logo h5{animation:gein .7s 1.3s cubic-bezier(.2,1.4,.4,1) forwards,gepulse 2.4s 2.2s ease-in-out infinite}
+.ge-scene.on .ge-logo h5{animation:gein .7s 1.2s cubic-bezier(.2,1.4,.4,1) forwards,gepulse 2.4s 2.2s ease-in-out infinite}
 @keyframes gepulse{50%{filter:drop-shadow(.04em .04em 0 #000) drop-shadow(0 0 .7em rgba(255,79,163,.95))}}
 .ge-scene.on .ge-ribbon{animation:geribbon .5s 2.1s forwards}
 @keyframes geribbon{to{transform:skewX(-12deg) scaleX(1)}}
@@ -375,7 +378,7 @@
     </div>
   `);
   const snd = $('#gi-snd');
-  const setMute = () => { snd.textContent = muted ? '🔇' : '🔊'; if (master) master.gain.value = muted ? 0 : .85; if (musicEl) musicEl.muted = muted; };
+  const setMute = () => { snd.textContent = muted ? '🔇' : '🔊'; if (master) master.gain.value = gainOf(); if (musicEl) musicEl.muted = muted; };
   snd.addEventListener('click', () => { muted = !muted; setMute(); });
 
   /* ---------- intro (spustí se až po Startu v menu) ---------- */
@@ -408,22 +411,20 @@
     xmb.style.transformOrigin = (r.left + r.width / 2 - b.left) + 'px ' + (r.top + r.height / 2 - b.top) + 'px';
     intro.classList.add('launching'); sfx('whoosh');
 
-    const T1 = 1000;                  // 1) temná tma, rozsvítí se světla auta, motor
-    at(() => { show('ign'); bed(); sfx('riser'); }, T1);
+    bed();                            // hudba startuje hned; údery v ní jsou po ~1,68 s, na ně je časování naladěné
+    const T1 = 860, T2 = 3460, T3 = 6120, T4 = 11860;
+    at(() => { show('ign'); sfx('riser'); }, T1);                 // 1) světla auta
     at(() => sfx('engine'), T1 + 1000);
-    const T2 = T1 + 2600;             // 2) úder, KOTLIK GAMES
-    at(() => { show('pres'); impact(50, 50, true); ember = .3; }, T2);
+    at(() => { show('pres'); impact(50, 50, true); ember = .3; }, T2);   // 2) KOTLIK GAMES (úder na beat)
     at(() => sfx('whoosh'), T2 + 300);
     at(() => typeText($('#gi-type'), 'uvádí…', 140), T2 + 1700);
-    const T3 = T2 + 4600;             // 3) komiksové panely, každý dopadne s třeskem
-    at(() => { show('panels'); sfx('whoosh'); ember = .45; }, T3);
-    [0, 1, 2, 3].forEach(i => at(() => impact(13 + i * 25, 55, false), T3 + 750 + i * 550));
-    at(() => sfx('riser'), T3 + 1800);
-    at(() => impact(50, 50, true), T3 + 3550);    // slogan
-    const T4 = T3 + 5000;             // 4) titulek
-    at(() => { show('title'); impact(50, 45, true); sfx('stinger'); ember = .7; }, T4);
+    at(() => { show('panels'); sfx('whoosh'); ember = .45; }, T3);       // 3) panely dopadají na beat / půlbeat
+    [0, 1, 2, 3].forEach(i => at(() => impact(13 + i * 25, 55, false), T3 + 700 + i * 840));
+    at(() => sfx('riser'), T3 + 2540);
+    at(() => impact(50, 50, true), T3 + 4080);                    // slogan
+    at(() => { show('title'); impact(50, 45, true); sfx('stinger'); ember = .7; }, T4);   // 4) titulek
     at(() => sfx('engine'), T4 + 900);
-    at(() => impact(50, 44, true), T4 + 1550);    // dopad loga
+    at(() => impact(50, 44, true), T4 + 1680);                    // dopad loga
     at(() => sfx('whoosh'), T4 + 2100);
     at(load, T4 + 2500);
   }
