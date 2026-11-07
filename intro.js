@@ -227,7 +227,8 @@
   /* =====================================================================
      SCÉNY INTRA: generují se tady (texty si klidně uprav)
      ===================================================================== */
-  intro.querySelectorAll('.gi-scene').forEach(e => e.remove());   // smaže STARÉ scény z HTML
+  // smaže jen STARÉ scény intra z HTML (pres, panels, title). Scénu "menu" (PlayStation) nech!
+  intro.querySelectorAll('.gi-scene:not([data-s="menu"])').forEach(e => e.remove());
   /* CSS intra je přímo tady: styl.css už pro intro nepotřebuješ */
   const st = document.createElement('style'); st.textContent = `
 .gi-skip,.ge-snd{font-family:Barlow,sans-serif}
