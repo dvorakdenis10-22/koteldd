@@ -358,7 +358,7 @@
       <div class="ge-panels">
         <div class="ge-p p1" style="--i:0"><span>ŠPINAVÁ PRÁCE</span><em>Někdo ji dělat musí.</em></div>
         <div class="ge-p p2" style="--i:1"><span>RYCHLÉ DODÁNÍ</span><em>Wolt nečeká.</em></div>
-        <div class="ge-p p3" style="--i:2"><span>6 % NAFTY</span><em>Víc nebylo.</em></div>
+        <div class="ge-p p3" style="--i:2"><span>PLNÁ NÁDRŽ</span><em>Aspoň na začátku.</em></div>
         <div class="ge-p p4" style="--i:3"><span>BEZ BRZD</span><em>Skoro.</em></div>
       </div>
       <i class="ge-speed"></i>
@@ -388,7 +388,7 @@
     const iv = setInterval(() => { el.textContent = txt.slice(0, ++i); sfx('tick'); if (i >= txt.length) clearInterval(iv); }, speed);
     timers.push(iv);
   }
-  const msgs = ['Načítání rzi…', 'Dolévání nafty (6 %)…', 'Utahování lepicí pásky…', 'Odvzdušňování radiátorů…', 'Hledání parkoviště u KM Prona…'];
+  const msgs = ['Načítání rzi…', 'Dolévání nafty do plna…', 'Utahování lepicí pásky…', 'Odvzdušňování radiátorů…', 'Hledání parkoviště u KM Prona…'];
   function load() {
     if (loading) return; loading = true;
     const bar = $('.ge-bar i'), txt = $('.ge-load span'); let p = 0;
