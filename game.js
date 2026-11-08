@@ -58,8 +58,8 @@
   sun.shadow.bias = -.0003; sun.shadow.normalBias = .04; scene.add(hemi, sun, sun.target, moonL);
   const C = (r, g, b) => new T.Color(r, g, b), SUN = new T.Vector3();
   const MOODS = {
-    golden: { top: C(.07, .24, .62), bot: C(1, .5, .22), dir: [-.7, .25, .5], si: 3.1, fog: .0036, hemi: .62, exp: 1.05 },
-    noon: { top: C(.04, .18, .7), bot: C(.55, .75, 1), dir: [-.3, .85, .3], si: 3.6, fog: .0018, hemi: .85, exp: 1 },
+    golden: { top: C(.05, .22, .8), bot: C(.62, .76, .98), dir: [-.7, .35, .5], si: 3.0, fog: .0026, hemi: .8, exp: 1.1 },
+    noon: { top: C(.04, .2, .85), bot: C(.55, .75, 1), dir: [-.3, .85, .3], si: 3.6, fog: .0016, hemi: .95, exp: 1.1 },
     fog: { top: C(.45, .5, .56), bot: C(.62, .65, .68), dir: [-.5, .35, .4], si: 1.1, fog: .011, hemi: .95, exp: 1.1 }
   };
   let mood = MOODS[saved.mood] ? saved.mood : 'golden', nightV = 0;
@@ -78,7 +78,7 @@ float s=max(dot(v,sun),0.);c+=vec3(1.,.72,.4)*(pow(s,900.)*4.+pow(s,14.)*.45+pow
 float m=max(dot(v,moon),0.);c+=vec3(.8,.85,1.)*(pow(m,1500.)*3.+pow(m,40.)*.12)*night;
 float st=step(.9975,fract(sin(dot(floor(v*230.),vec3(12.9898,78.233,37.719)))*43758.5453));c+=vec3(st)*night*step(.1,v.y);
 if(v.y>.02){vec2 cp=v.xz/(v.y+.18)*1.5+vec2(time*.012,0.);float cl=smoothstep(.5-.12*cloud,.82-.1*cloud,fbm(cp));
-float lt=pow(max(dot(normalize(v.xz+1e-4),normalize(sun.xz+1e-4)),0.),2.)*.5+.5;vec3 cc=mix(vec3(.5,.45,.5),vec3(1.,.78,.58),lt)*mix(1.,.12,night);
+float lt=pow(max(dot(normalize(v.xz+1e-4),normalize(sun.xz+1e-4)),0.),2.)*.5+.5;vec3 cc=mix(vec3(.82,.86,.95),vec3(1.,.95,.88),lt)*mix(1.,.12,night);
 cc*=1.-.25*smoothstep(.55,.9,fbm(cp*1.7+3.));
 c=mix(c,cc,cl*.8*smoothstep(.02,.25,v.y));}
 gl_FragColor=vec4(c,1.);
@@ -113,9 +113,9 @@ gl_FragColor=vec4(c,1.);
         fragmentShader: `varying vec2 vUv;uniform sampler2D tDiffuse;uniform float exposure,time;uniform vec2 res;
 vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
 void main(){vec2 q0=vUv-.5;float ab=dot(q0,q0)*.0016;
-vec3 c=vec3(texture2D(tDiffuse,vUv+q0*ab).r,texture2D(tDiffuse,vUv).g,texture2D(tDiffuse,vUv-q0*ab).b)*exposure*.8;c=aces(c);float l=dot(c,vec3(.299,.587,.114));
+vec3 c=vec3(texture2D(tDiffuse,vUv+q0*ab).r,texture2D(tDiffuse,vUv).g,texture2D(tDiffuse,vUv-q0*ab).b)*exposure*.95;c=aces(c);float l=dot(c,vec3(.299,.587,.114));
 c=mix(c,c*vec3(1.07,1.,.9),l);c=mix(vec3(l),c,1.14);c=pow(c,vec3(1./2.2));
-vec2 q=vUv-.5;c*=mix(.58,1.,smoothstep(.9,.25,length(q*vec2(1.1,1.3))));
+vec2 q=vUv-.5;c*=mix(.72,1.,smoothstep(.9,.25,length(q*vec2(1.1,1.3))));
 c+=(fract(sin(dot(vUv*res+time,vec2(12.9898,78.233)))*43758.5453)-.5)*.016;gl_FragColor=vec4(c,1.);}`
       }); cp.addPass(finalPass);
       fxPass = new T.ShaderPass(T.FXAAShader); fxPass.material.uniforms.resolution.value.set(1 / W2, 1 / H2); cp.addPass(fxPass);
@@ -151,7 +151,7 @@ c+=(fract(sin(dot(vUv*res+time,vec2(12.9898,78.233)))*43758.5453)-.5)*.016;gl_Fr
   }));
   const plainAsph = tex(cvs(512, 512, (g, w, h) => { g.fillStyle = '#4d4f52'; g.fillRect(0, 0, w, h); speckle(g, w, h, 20000, 60, 125, .5); for (let i = 0; i < 20; i++) { g.fillStyle = 'rgba(20,20,22,.2)'; g.fillRect(rnd() * w, rnd() * h, 40 + rnd() * 90, 30 + rnd() * 90); } }), 30, 9);
   const arrowTex = tex(cvs(128, 256, g => { g.strokeStyle = g.fillStyle = '#e9e9e4'; g.lineWidth = 24; g.lineCap = 'butt'; g.beginPath(); g.moveTo(70, 250); g.lineTo(70, 150); g.quadraticCurveTo(70, 100, 40, 96); g.stroke(); g.beginPath(); g.moveTo(10, 98); g.lineTo(52, 66); g.lineTo(52, 130); g.closePath(); g.fill(); }));
-  const grassTex = tex(cvs(512, 512, (g, w, h) => { g.fillStyle = '#b4b4b4'; g.fillRect(0, 0, w, h); for (let i = 0; i < 26000; i++) { const v = 110 + rnd() * 130 | 0; g.fillStyle = `rgba(${v},${v},${v},.38)`; g.fillRect(rnd() * w, rnd() * h, 1.5, 3 + rnd() * 2); } for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(${rnd() < .5 ? 255 : 90},${rnd() < .5 ? 255 : 90},${rnd() < .5 ? 255 : 90},.05)`; g.beginPath(); g.arc(rnd() * w, rnd() * h, 6 + rnd() * 26, 0, 7); g.fill(); } }), 190, 190);
+  const grassTex = tex(cvs(512, 512, (g, w, h) => { g.fillStyle = '#e4e4e4'; g.fillRect(0, 0, w, h); for (let i = 0; i < 26000; i++) { const v = 170 + rnd() * 85 | 0; g.fillStyle = `rgba(${v},${v},${v},.38)`; g.fillRect(rnd() * w, rnd() * h, 1.5, 3 + rnd() * 2); } for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(${rnd() < .5 ? 255 : 90},${rnd() < .5 ? 255 : 90},${rnd() < .5 ? 255 : 90},.05)`; g.beginPath(); g.arc(rnd() * w, rnd() * h, 6 + rnd() * 26, 0, 7); g.fill(); } }), 190, 190);
   const plaster = tex(cvs(256, 256, (g, w, h) => { g.fillStyle = '#d8d4cc'; g.fillRect(0, 0, w, h); for (let i = 0; i < 3500; i++) { const v = 165 + rnd() * 75 | 0; g.fillStyle = `rgba(${v},${v - 4},${v - 12},.35)`; g.fillRect(rnd() * w, rnd() * h, 2, 2); } for (let i = 0; i < 14; i++) { g.fillStyle = 'rgba(90,80,60,.06)'; g.fillRect(rnd() * w, rnd() * h, 6 + rnd() * 14, 30 + rnd() * 70); } }), 2, 2);
   const tiles = tex(cvs(128, 128, (g, w, h) => {
     g.fillStyle = '#9a4a30'; g.fillRect(0, 0, w, h);
@@ -177,9 +177,9 @@ c+=(fract(sin(dot(vUv*res+time,vec2(12.9898,78.233)))*43758.5453)-.5)*.016;gl_Fr
     const x = tp.getX(i), z = tp.getZ(i); tp.setY(i, H(x, z));
     const n = (Math.sin(x * .05) * Math.cos(z * .043) * .5 + .5) * .7 + sm(430, 520, -z) * .1 + (Math.sin(x * .21 + z * .17) * .5 + .5) * .08;
     const wheat = sm(14, 40, z - ZB) * .9, crop = sm(30, 70, x) * sm(40, 100, ZB - z) * sm(ZB - 380, ZB - 330, z) * .95 + sm(SX + 55, SX + 90, x) * sm(12, 40, ZB - z) * .9;
-    let r = mixN(.1, .26, n), g = mixN(.2, .24, n), b = mixN(.05, .07, n);
-    r = mixN(r, .4, wheat); g = mixN(g, .3, wheat); b = mixN(b, .08, wheat);
-    r = mixN(r, .05, crop); g = mixN(g, .2, crop); b = mixN(b, .03, crop);
+    let r = mixN(.08, .16, n), g = mixN(.3, .42, n), b = mixN(.03, .06, n);
+    r = mixN(r, .55, wheat); g = mixN(g, .42, wheat); b = mixN(b, .1, wheat);
+    r = mixN(r, .07, crop); g = mixN(g, .32, crop); b = mixN(b, .04, crop);
     const j = (Math.sin(x * 1.3) * Math.cos(z * 1.1)) * .012; tcol.set([r + j, g + j, b + j * .5], i * 3);
   }
   tg.setAttribute('color', new T.BufferAttribute(tcol, 3)); tg.computeVertexNormals();
@@ -276,30 +276,95 @@ c+=(fract(sin(dot(vUv*res+time,vec2(12.9898,78.233)))*43758.5453)-.5)*.016;gl_Fr
       ld.position.set(x, H(x, z) + 3, z); ld.rotation.set(0, 0, 0); ld.updateMatrix(); pg.setMatrixAt(k, ld.matrix);
       ld.position.set(x - p.tz * .5 * -sd, H(x, z) + 6.05, z + p.tx * .5 * -sd); ld.rotation.set(0, Math.atan2(-p.tz, p.tx), 0); ld.updateMatrix(); hg.setMatrixAt(k++, ld.matrix); }
     pg.count = hg.count = k; pg.castShadow = true; scene.add(pg, hg); }
-  const trunkG = new T.CylinderGeometry(.25, .42, 4, 7).translate(0, 2, 0), crownG = new T.IcosahedronGeometry(1, 2), pineG = new T.ConeGeometry(1.7, 5, 10).translate(0, 3.5, 0), pineG2 = new T.ConeGeometry(1.2, 4, 10).translate(0, 6.6, 0);
-  const NT = 1100, trunks = new T.InstancedMesh(trunkG, std({ color: 0x4a3626, roughness: 1 }), NT), c1 = new T.InstancedMesh(crownG, std({ roughness: .95 }), NT), c2 = new T.InstancedMesh(crownG, std({ roughness: .95 }), NT), c3 = new T.InstancedMesh(crownG, std({ roughness: .95 }), NT),
-    pines = new T.InstancedMesh(pineG, std({ roughness: .95 }), NT), pines2 = new T.InstancedMesh(pineG2, std({ roughness: .95 }), NT);
-  const dm = new T.Object3D(), tc = new T.Color(); let ti = 0, pi2 = 0;
-  for (let k = 0; k < 24000 && ti + pi2 < NT; k++) {
+  /* ---------- stromy: hrbolaté koruny, barevný přechod, kmen s větvemi ---------- */
+  const crownG = new T.IcosahedronGeometry(1, 2);   // používají keře u benzinky
+  const hash3 = (x, y, z) => { const q = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return q - Math.floor(q); };
+  const vnoise = (x, y, z) => {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = x - xi, yf = y - yi, zf = z - zi,
+      u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf), l = (a, b2, t) => a + (b2 - a) * t;
+    return l(l(l(hash3(xi, yi, zi), hash3(xi + 1, yi, zi), u), l(hash3(xi, yi + 1, zi), hash3(xi + 1, yi + 1, zi), u), v),
+      l(l(hash3(xi, yi, zi + 1), hash3(xi + 1, yi, zi + 1), u), l(hash3(xi, yi + 1, zi + 1), hash3(xi + 1, yi + 1, zi + 1), u), v), w);
+  };
+  const weld = g0 => {
+    const p = g0.attributes.position, map = new Map(), pos = [], idx = [];
+    for (let i = 0; i < p.count; i++) {
+      const k = Math.round(p.getX(i) * 1000) + ',' + Math.round(p.getY(i) * 1000) + ',' + Math.round(p.getZ(i) * 1000); let j = map.get(k);
+      if (j === undefined) { j = pos.length / 3; map.set(k, j); pos.push(p.getX(i), p.getY(i), p.getZ(i)); } idx.push(j);
+    }
+    return { pos, idx };
+  };
+  const mix3 = (a, b2, t) => [a[0] + (b2[0] - a[0]) * t, a[1] + (b2[1] - a[1]) * t, a[2] + (b2[2] - a[2]) * t];
+  const mkPart = (V, Cl, Ix) => (g0, colFn) => {
+    const base = V.length / 3, p = g0.attributes.position, ix = g0.index;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), c = colFn(x, y, z); V.push(x, y, z); Cl.push(c[0], c[1], c[2]); }
+    for (let i = 0; i < ix.count; i++) Ix.push(base + ix.getX(i));
+  };
+  const finishTree = (V, Cl, Ix) => {
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(V, 3)); g.setAttribute('color', new T.Float32BufferAttribute(Cl, 3));
+    g.setIndex(Ix); g.computeVertexNormals(); return g;
+  };
+  const barkCol = (x, y, z) => { const n = .7 + .5 * vnoise(x * 9, y * 3, z * 9); return [.17 * n, .105 * n, .06 * n]; };
+  function makeOak(blobs, trunkH, seedv, dark, light) {
+    const V = [], Cl = [], Ix = [], part = mkPart(V, Cl, Ix);
+    let lo = 1e9, hi = -1e9; blobs.forEach(b2 => { lo = Math.min(lo, b2[1] - b2[4]); hi = Math.max(hi, b2[1] + b2[4]); });
+    const tr = new T.CylinderGeometry(.15, .34, trunkH, 8, 4).translate(0, trunkH / 2, 0), tpos = tr.attributes.position;
+    for (let i = 0; i < tpos.count; i++) { const f = 1 + Math.max(0, 1 - tpos.getY(i) / .6) * .7; tpos.setX(i, tpos.getX(i) * f); tpos.setZ(i, tpos.getZ(i) * f); }
+    part(tr, barkCol);
+    blobs.slice(1, 4).forEach(b2 => {   // větve vedoucí do koruny
+      const d = new T.Vector3(b2[0] * .8, b2[1] - trunkH * .7, b2[2] * .8), len = d.length(); d.normalize();
+      const g0 = new T.CylinderGeometry(.04, .1, len, 5).translate(0, len / 2, 0);
+      g0.applyMatrix4(new T.Matrix4().compose(new T.Vector3(0, trunkH * .7, 0), new T.Quaternion().setFromUnitVectors(new T.Vector3(0, 1, 0), d), new T.Vector3(1, 1, 1)));
+      part(g0, () => [.15, .095, .055]);
+    });
+    blobs.forEach((b2, bi) => {
+      const g0 = weld(new T.IcosahedronGeometry(1, 2)), base = V.length / 3, sd = seedv + bi * 3.7;
+      for (let i = 0; i < g0.pos.length; i += 3) {
+        let x = g0.pos[i], y = g0.pos[i + 1], z = g0.pos[i + 2]; const l = Math.hypot(x, y, z); x /= l; y /= l; z /= l;
+        const n1 = vnoise(x * 1.8 + sd, y * 1.8 + sd * .7, z * 1.8 + sd * 1.3), n2 = vnoise(x * 5 + sd, y * 5 - sd, z * 5);
+        const r = .72 + .42 * n1 + .16 * n2, wy = b2[1] + y * b2[4] * r;
+        V.push(b2[0] + x * b2[3] * r, wy, b2[2] + z * b2[5] * r);
+        const t = clamp((wy - lo) / (hi - lo) * .85 + (n2 - .5) * .5 + (n1 - .5) * .25 + y * .1, 0, 1), c = mix3(dark, light, t);
+        Cl.push(c[0], c[1], c[2]);
+      }
+      g0.idx.forEach(j => Ix.push(base + j));
+    });
+    return finishTree(V, Cl, Ix);
+  }
+  function makePine(seedv) {
+    const V = [], Cl = [], Ix = [], part = mkPart(V, Cl, Ix), dark = [.015, .075, .035], light = [.07, .27, .1];
+    part(new T.CylinderGeometry(.14, .28, 3, 7).translate(0, 1.5, 0), barkCol);
+    [[2.3, 2.6, 1.5], [1.95, 2.4, 2.9], [1.6, 2.2, 4.2], [1.25, 2.0, 5.4], [.85, 1.8, 6.5]].forEach(([r, h, y0], k) => {
+      const g0 = new T.ConeGeometry(r, h, 11, 2).translate(0, y0 + h / 2, 0), p = g0.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i), z = p.getZ(i), yy = p.getY(i);
+        if (Math.hypot(x, z) > .01) { const f = .82 + .36 * vnoise(x * 2.5 + k * 5 + seedv, yy * 2, z * 2.5); p.setX(i, x * f); p.setZ(i, z * f); }
+      }
+      part(g0, (x, y, z) => { const tt = (y - y0) / h, n = vnoise(x * 3 + seedv, y * 3, z * 3); return mix3(dark, light, clamp(.12 + .4 * tt + (y0 - 1.5) / 6.5 * .35 + (n - .5) * .4, 0, 1)); });
+    });
+    return finishTree(V, Cl, Ix);
+  }
+  const NT = 1100, treeMat = std({ vertexColors: true, roughness: .92 });
+  const oakDark = [.035, .14, .03], oakLight = [.17, .44, .07];
+  const oakA = makeOak([[0, 6.2, 0, 2.9, 2.4, 2.9], [1.6, 5.2, .6, 2.1, 1.8, 2.1], [-1.5, 5.4, -.7, 2.2, 1.9, 2.2], [.4, 4.7, -1.6, 1.9, 1.6, 1.9], [-.2, 7.6, .3, 1.9, 1.6, 1.9], [.7, 5.0, 1.7, 1.8, 1.5, 1.8]], 3.6, 1.3, oakDark, oakLight);
+  const oakB = makeOak([[0, 6.8, 0, 2.2, 3.0, 2.2], [1.1, 5.2, .3, 1.7, 1.9, 1.7], [-1.0, 5.6, -.4, 1.8, 2.0, 1.8], [0, 8.6, 0, 1.4, 1.7, 1.4], [.2, 4.3, -.9, 1.5, 1.4, 1.5]], 3.2, 7.7, [.03, .13, .04], [.14, .4, .09]);
+  const pineGeo = makePine(3.1);
+  const mkInst = g0 => { const m = new T.InstancedMesh(g0, treeMat, NT); m.castShadow = true; m.count = 0; scene.add(m); return m; };
+  const treeM = [mkInst(oakA), mkInst(oakB), mkInst(pineGeo)], treeN = [0, 0, 0];
+  const dm = new T.Object3D(), tc = new T.Color();
+  for (let k = 0; k < 24000 && treeN[0] + treeN[1] + treeN[2] < NT; k++) {
     const x = -290 + rnd() * 1080, z = -1700 + rnd() * 1290, dr = dRoad(x, z);
     if (dr < (z < ZB - 60 ? 22 : 13) || dStat(x, z) < 12 || (x > SX + 55 && x < SX + 85 && z > ZB - 40 && z < ZB + 5)) continue;
     if (Math.hypot(x - GX, z - GZ) < 30) continue;
     const forest = x < 10 && z < ZB - 40 ? .5 : 0;
     if (Math.sin(x * .03) * Math.cos(z * .025) + rnd() * .8 + forest < .1) continue;
-    const y = H(x, z), s = .8 + rnd() * .9;
-    if (rnd() < .35) {
-      dm.position.set(x, y, z); dm.rotation.set(0, rnd() * 6, 0); dm.scale.set(s, s * (1 + rnd() * .4), s); dm.updateMatrix(); pines.setMatrixAt(pi2, dm.matrix); pines2.setMatrixAt(pi2, dm.matrix);
-      tc.setRGB(.03 + rnd() * .04, .1 + rnd() * .06, .04 + rnd() * .03); pines.setColorAt(pi2, tc); tc.multiplyScalar(1.15); pines2.setColorAt(pi2, tc); pi2++;
-    } else {
-      dm.position.set(x, y, z); dm.rotation.set(0, rnd() * 6, 0); dm.scale.set(s, s, s); dm.updateMatrix(); trunks.setMatrixAt(ti, dm.matrix);
-      const ox = (rnd() - .5) * 1.4 * s, oz = (rnd() - .5) * 1.4 * s;
-      dm.position.set(x, y + 4.6 * s, z); dm.scale.set(3.2 * s, 2.8 * s, 3.2 * s); dm.updateMatrix(); c1.setMatrixAt(ti, dm.matrix);
-      dm.position.set(x, y + 7 * s, z); dm.scale.set(2.2 * s, 2.2 * s, 2.2 * s); dm.updateMatrix(); c2.setMatrixAt(ti, dm.matrix);
-      dm.position.set(x + ox, y + 5.6 * s, z + oz); dm.scale.set(2.3 * s, 2 * s, 2.3 * s); dm.updateMatrix(); c3.setMatrixAt(ti, dm.matrix);
-      tc.setRGB(.05 + rnd() * .08, .15 + rnd() * .1, .03 + rnd() * .04); c1.setColorAt(ti, tc); tc.multiplyScalar(1.12); c2.setColorAt(ti, tc); c3.setColorAt(ti, tc); ti++;
-    }
+    const y = H(x, z), s = .8 + rnd() * .9, kind = rnd() < .35 ? 2 : (rnd() < .5 ? 0 : 1), n = treeN[kind]++;
+    dm.position.set(x, y - .1, z); dm.rotation.set((rnd() - .5) * .08, rnd() * 6.28, (rnd() - .5) * .08);
+    dm.scale.set(s * (.9 + rnd() * .25), s * (kind === 2 ? 1 + rnd() * .4 : .9 + rnd() * .35), s * (.9 + rnd() * .25)); dm.updateMatrix();
+    treeM[kind].setMatrixAt(n, dm.matrix);
+    const au = kind !== 2 && rnd() < .08;   // občas podzimní strom
+    tc.setRGB(au ? 1.9 : .85 + rnd() * .4, au ? 1.0 : .88 + rnd() * .3, au ? .5 : .85 + rnd() * .3); treeM[kind].setColorAt(n, tc);
   }
-  [trunks, c1, c2, c3].forEach(m => { m.count = ti; m.castShadow = true; scene.add(m); }); pines.count = pines2.count = pi2; pines.castShadow = pines2.castShadow = true; scene.add(pines, pines2);
+  treeM.forEach((m, i) => { m.count = treeN[i]; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
   const NG = 14000, tuftG = new T.PlaneGeometry(.7, .9).translate(0, .45, 0), tuftM = std({ map: tuftTex, alphaTest: .45, side: T.DoubleSide, roughness: 1 });
   const tu1 = new T.InstancedMesh(tuftG, tuftM, NG), tu2 = new T.InstancedMesh(tuftG, tuftM, NG); let gi = 0;
   for (let k = 0; k < 50000 && gi < NG; k++) {
@@ -487,11 +552,12 @@ c+=(fract(sin(dot(vUv*res+time,vec2(12.9898,78.233)))*43758.5453)-.5)*.016;gl_Fr
   }
 
   /* ---------- stav hry ---------- */
+  const FUEL = 100;   // normální nádrž v %
   const keys = { gas: 0, brake: 0, left: 0, right: 0, tap: 0 }; let st, skin = saved.skin === 'wolt' ? 'wolt' : 'classic', last = 0, vis = true, camMode = 0, frame = 0;
   const look = new T.Vector3(), cpos = new T.Vector3(); let camInit = false;
   function reset() {
     const p = pathAt(0), r = [-p.tz, p.tx];
-    st = { mode: 'idle', x: p.x + r[0] * 1.75, z: p.z + r[1] * 1.75, psi: Math.atan2(-p.tx, -p.tz), v: 0, s: 0, fuel: 6, time: 0, t: 0, blink: false, blinkOn: false, sig: false, penalty: 0, steer: 0, delta: 0, revT: 0, sleep: 0, wheel: 0, rust: false, tip: '', tipT: 0, sleepT: 0, done: 0, B: false, bumpT: 0, tA: 3, tB: 2, wrong: false };
+    st = { mode: 'idle', x: p.x + r[0] * 1.75, z: p.z + r[1] * 1.75, psi: Math.atan2(-p.tx, -p.tz), v: 0, s: 0, fuel: FUEL, time: 0, t: 0, blink: false, blinkOn: false, sig: false, penalty: 0, steer: 0, delta: 0, revT: 0, sleep: 0, wheel: 0, rust: false, tip: '', tipT: 0, sleepT: 0, done: 0, B: false, bumpT: 0, tA: 3, tB: 2, wrong: false };
     npcs.forEach(n => { n.on = false; n.c.car.visible = false; });
     setNight(0); $('g-sleep').classList.remove('on'); camInit = false; applySkin(skin);
   }
@@ -511,9 +577,9 @@ c+=(fract(sin(dot(vUv*res+time,vec2(12.9898,78.233)))*43758.5453)-.5)*.016;gl_Fr
     if (st.mode === 'drive') {
       st.time += dt; const gas = keys.gas;
       if (keys.tap) { st.blink = !st.blink; keys.tap = 0; }
-      if (st.fuel > 0) { st.fuel = Math.max(0, st.fuel - dt * gas * .22); if (st.fuel === 0) { st.rust = true; tip('Došla nafta! Oktávka jede na rez.', 4); } }
+      if (st.fuel > 0) { st.fuel = Math.max(0, st.fuel - dt * gas * .35); if (st.fuel === 0) { st.rust = true; tip('Došla nafta! Oktávka jede na rez.', 4); } }
       const off = !roadAt(st.x, st.z), sg = Math.sign(st.v);
-      let a = gas * (st.fuel > 0 ? 7.5 : 3.9) - .27 * st.v - .6 * sg - slope * 20 - (off ? .5 * st.v + .8 * sg : 0);
+      let a = gas * (st.fuel > 0 ? 7.5 : 5.2) - .27 * st.v - .6 * sg - slope * 20 - (off ? .5 * st.v + .8 * sg : 0);
       if (keys.brake) { if (st.v > .3) { a -= 13; st.revT = 0; } else { st.revT += dt; if (st.revT > .4) a -= 3.2; else { st.v = 0; a = 0; } } } else st.revT = 0;
       if (gas && st.v <= 0 && a < 0 && st.v > -.2) a = 0;
       if (!gas && !keys.brake && Math.abs(st.v) < .4) { st.v = 0; a = 0; }
@@ -542,7 +608,7 @@ c+=(fract(sin(dot(vUv*res+time,vec2(12.9898,78.233)))*43758.5453)-.5)*.016;gl_Fr
       if (st.sleepT > 8 && !st.done) {
         st.done = 1; const j = ['Kotlik chrápe jako kotel v únoru.', 'Ráno ho čeká výměna sifonu a rozvaděč.', 'Oktávka tiká, chladne a drží pohromadě jen z cti.', 'Po probuzení si objedná Wolt sám sobě.'];
         const tt = st.time + st.penalty;
-        say('Kotlik se vyspal', `Cesta z garáže: ${tt.toFixed(0)} s${st.penalty ? ` (z toho ${st.penalty} s trestných)` : ''}. ${st.rust ? 'Dojel jsi na rez.' : 'Dojel jsi na poslední kapky nafty.'}<br>${j[Math.floor(Math.random() * j.length)]}`, 'Jet znovu', true);
+        say('Kotlik se vyspal', `Cesta z garáže: ${tt.toFixed(0)} s${st.penalty ? ` (z toho ${st.penalty} s trestných)` : ''}. ${st.rust ? 'Dojel jsi na rez.' : 'Zbylo ti ' + Math.round(st.fuel) + ' % nafty.'}<br>${j[Math.floor(Math.random() * j.length)]}`, 'Jet znovu', true);
       }
     }
     // provoz
@@ -605,8 +671,8 @@ c+=(fract(sin(dot(vUv*res+time,vec2(12.9898,78.233)))*43758.5453)-.5)*.016;gl_Fr
     mc.fillStyle = '#ffd21f'; mc.beginPath(); mc.moveTo(80, 118); mc.lineTo(86, 135); mc.lineTo(74, 135); mc.closePath(); mc.fill();
   }
   function hud() {
-    hSpd.textContent = Math.round(Math.abs(st.v) * 3.6); hFuel.style.width = (st.fuel > 0 ? st.fuel / 6 * 100 : 100) + '%'; hFuel.classList.toggle('rust', st.fuel <= 0);
-    hFuelT.textContent = st.fuel > 0 ? `Nafta ${st.fuel.toFixed(1)} %` : 'Nafta 0 %, jedeš na rez'; hBlink.classList.toggle('on', st.blink);
+    hSpd.textContent = Math.round(Math.abs(st.v) * 3.6); hFuel.style.width = (st.fuel > 0 ? st.fuel / FUEL * 100 : 100) + '%'; hFuel.classList.toggle('rust', st.fuel <= 0);
+    hFuelT.textContent = st.fuel > 0 ? `Nafta ${Math.round(st.fuel)} %` : 'Nafta 0 %, jedeš na rez'; hBlink.classList.toggle('on', st.blink);
     const p = !st.B ? clamp(st.s / LA, 0, 1) * .5 : .5 + clamp((st.x - 14) / (SX + 62 - 14), 0, 1) * .5; hProg.style.left = p * 100 + '%';
     let s = '';
     if (st.mode === 'drive') {
