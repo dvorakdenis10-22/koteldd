@@ -15,18 +15,33 @@
 
   /* ---------- fotka spícího Kotlika (volitelná, v plném rozlišení) ---------- */
   const sleepBox = $('g-sleep'), sleepImg = $('g-sleep-img'); let photoOK = false;
-  sleepImg.style.cssText = 'display:none;width:100%;height:auto;filter:none;image-rendering:auto;border-radius:12px;box-shadow:0 14px 40px rgba(0,0,0,.7)';
-  sleepBox.style.width = 'min(62%,640px)'; sleepBox.style.display = 'none';
+  // fotka je vlevo dole; průhledné PNG se stínem (drop-shadow respektuje průhlednost, box-shadow by kreslil obdélník)
+  sleepImg.style.cssText = 'display:none;width:100%;height:auto;filter:drop-shadow(0 10px 18px rgba(0,0,0,.7));image-rendering:auto;border-radius:0;box-shadow:none';
+  Object.assign(sleepBox.style, { width: 'min(38%,460px)', left: '2%', bottom: '13%', transform: 'none', display: 'none' });
+  // kdyby měla fotka černé pozadí natvrdo (ne průhlednost), černá spojená s okrajem obrázku se při načtení vyřízne
+  function keyBlack(im) {
+    try {
+      const sc = Math.min(1, 1600 / im.naturalWidth), W = im.naturalWidth * sc | 0, Hh = im.naturalHeight * sc | 0, c = document.createElement('canvas'); c.width = W; c.height = Hh;
+      const g = c.getContext('2d'); g.drawImage(im, 0, 0, W, Hh); const d = g.getImageData(0, 0, W, Hh), p = d.data;
+      const dark = i => p[i * 4] < 22 && p[i * 4 + 1] < 22 && p[i * 4 + 2] < 22 && p[i * 4 + 3] > 200;
+      if (!dark(0) || !dark(W - 1) || !dark((Hh - 1) * W)) return null;   // pozadí už je průhledné nebo není černé
+      const stack = new Int32Array(W * Hh); let sp = 0; const seen = new Uint8Array(W * Hh), push = i => { if (!seen[i] && dark(i)) { seen[i] = 1; stack[sp++] = i; } };
+      for (let x = 0; x < W; x++) { push(x); push((Hh - 1) * W + x); } for (let y = 0; y < Hh; y++) { push(y * W); push(y * W + W - 1); }
+      while (sp) { const i = stack[--sp], x = i % W, y = i / W | 0; p[i * 4 + 3] = 0; if (x > 0) push(i - 1); if (x < W - 1) push(i + 1); if (y > 0) push(i - W); if (y < Hh - 1) push(i + W); }
+      g.putImageData(d, 0, 0); return c.toDataURL('image/png');
+    } catch (e) { return null; }   // např. při otevření z disku (file://) prohlížeč čtení pixelů zakáže
+  }
   const photoLoaded = () => { photoOK = true; sleepImg.style.display = 'block'; };
+  function showPhoto(src) { const im = new Image(); im.onload = () => { const k = keyBlack(im); sleepImg.onload = photoLoaded; sleepImg.src = k || src; }; im.src = src; }
   function tryPhoto(list) {
     if (!list.length) return;
     const im = new Image();
-    im.onload = () => { sleepImg.src = list[0]; photoLoaded(); };
+    im.onload = () => showPhoto(list[0]);
     im.onerror = () => tryPhoto(list.slice(1));
     im.src = list[0];
   }
-  if (SLEEP_IMG) { sleepImg.onload = photoLoaded; sleepImg.src = SLEEP_IMG; }
-  else tryPhoto(['kotlik-spi.jpg', 'kotlik-spi.jpeg', 'kotlik-spi.png', 'kotlik-spi.webp', 'img/kotlik-spi.jpg', 'img/kotlik-spi.png', 'img/kotlik-spi.webp']);
+  if (SLEEP_IMG) showPhoto(SLEEP_IMG);
+  else tryPhoto(['kotlik-spi.png', 'kotlik-spi.webp', 'kotlik-spi.jpg', 'kotlik-spi.jpeg', 'img/kotlik-spi.png', 'img/kotlik-spi.webp', 'img/kotlik-spi.jpg']);
 
   /* ---------- uložená nastavení + rozlišení ---------- */
   let saved = {}; try { saved = JSON.parse(localStorage.getItem('kotlikOpts') || 'null') || {}; } catch (e) { }
@@ -986,3 +1001,4 @@ c+=(fract(sin(dot(vUv*res+time,vec2(12.9898,78.233)))*43758.5453)-.5)*.016;gl_Fr
   }
   reset(); requestAnimationFrame(loop);
 })();
+
