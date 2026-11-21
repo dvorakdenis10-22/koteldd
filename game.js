@@ -81,40 +81,46 @@
   let mood = MOODS[saved.mood] ? saved.mood : 'golden', nightV = 0;
   const skyU = { top: { value: new T.Color() }, bot: { value: new T.Color() }, sun: { value: SUN }, moon: { value: new T.Vector3(.3, .55, .4).normalize() }, night: { value: 0 }, time: { value: 0 }, cloud: { value: 1 } };
   const skyMat = new T.ShaderMaterial({
-    uniforms: skyU, side: T.BackSide, depthWrite: false, fog: false,
+    uniforms: skyU, side: T.BackSide, depthWrite: false, depthTest: false, fog: false,
     vertexShader: 'varying vec3 v;void main(){v=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader: `#include <tonemapping_pars_fragment>
 #include <encodings_pars_fragment>
-uniform vec3 top,bot,sun,moon;uniform float night,time,cloud;varying vec3 v;
-float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
-float ns(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1.,0.)),f.x),mix(hs(i+vec2(0.,1.)),hs(i+vec2(1.,1.)),f.x),f.y);}
-float fbm(vec2 p){float a=.5,s=0.;for(int i=0;i<6;i++){s+=a*ns(p);p=p*2.03+vec2(1.7,9.2);a*=.5;}return s;}
-float cld(vec2 p){return smoothstep(.5-.14*cloud,.86-.12*cloud,fbm(p));}
+uniform vec3 top,bot,sun,moon;
+uniform float night,time,cloud;
+varying vec3 v;
+float hsh(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float nz(vec2 p){vec2 i=floor(p);vec2 f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(hsh(i),hsh(i+vec2(1.0,0.0)),f.x),mix(hsh(i+vec2(0.0,1.0)),hsh(i+vec2(1.0,1.0)),f.x),f.y);}
+float fb(vec2 p){float a=0.5;float s=0.0;for(int i=0;i<5;i++){s+=a*nz(p);p=p*2.03+vec2(1.7,9.2);a*=0.5;}return s;}
+float cloudAt(vec2 p){return smoothstep(0.42-0.1*cloud,0.78-0.1*cloud,fb(p));}
 void main(){
-float y=v.y;float h=clamp(y*1.4+.12,0.,1.);vec3 c=mix(bot,top,pow(h,.55));
-float s=max(dot(v,sun),0.);
-float hz=exp(-max(y,0.)*5.5);
-c=mix(c,bot*1.08+vec3(.04,.03,.02),hz*.55);
-c+=vec3(1.,.6,.3)*pow(s,6.)*hz*.55*(1.-night);
-c+=vec3(1.,.72,.4)*(pow(s,900.)*4.+pow(s,14.)*.45+pow(s,3.)*.12)*(1.-night);
-float m=max(dot(v,moon),0.);c+=vec3(.8,.85,1.)*(pow(m,1500.)*3.+pow(m,40.)*.12)*night;
-float st=step(.9975,fract(sin(dot(floor(v*230.),vec3(12.9898,78.233,37.719)))*43758.5453));c+=vec3(st)*night*step(.1,y);
-if(y>.02){
-vec2 cp=v.xz/(y+.18)*1.5+vec2(time*.012,0.);
-float d=cld(cp);
-vec2 sd=normalize(sun.xz+1e-4)*.07;
-float d2=cld(cp+sd);
-float lt=clamp(.62+(d-d2)*3.2,0.,1.);
-vec3 cc=mix(vec3(.5,.56,.7),vec3(1.,.97,.92),lt);
-cc=mix(cc,vec3(1.,.74,.5),pow(s,4.)*.65);
-cc=mix(cc,cc*vec3(1.04,1.02,.98)+.06*(1.-d),pow(1.-d,2.)*.5);
-cc*=mix(1.,.1,night);
-c=mix(c,cc,d*.9*smoothstep(.02,.25,y));
-vec2 c2=v.xz/(y+.35)*vec2(.6,2.2)+vec2(time*.004,3.);
-float ci=smoothstep(.48,.92,fbm(c2*2.))*.35*smoothstep(.1,.5,y)*(1.-d);
-c=mix(c,vec3(.97,.95,.94)*mix(1.,.1,night),ci);
-}
-gl_FragColor=vec4(c,1.);
+  vec3 dir=normalize(v);
+  float y=dir.y;
+  float h=clamp(y*1.4+0.12,0.0,1.0);
+  vec3 col=mix(bot,top,pow(h,0.55));
+  float sd=max(dot(dir,normalize(sun)),0.0);
+  float haze=exp(-max(y,0.0)*5.0);
+  col=mix(col,bot*1.1+vec3(0.05,0.035,0.02),haze*0.55);
+  col+=vec3(1.0,0.6,0.3)*pow(sd,6.0)*haze*0.55*(1.0-night);
+  col+=vec3(1.0,0.72,0.4)*(pow(sd,900.0)*4.0+pow(sd,14.0)*0.45+pow(sd,3.0)*0.12)*(1.0-night);
+  float md=max(dot(dir,normalize(moon)),0.0);
+  col+=vec3(0.8,0.85,1.0)*(pow(md,1500.0)*3.0+pow(md,40.0)*0.12)*night;
+  float star=step(0.9975,fract(sin(dot(floor(dir*230.0),vec3(12.9898,78.233,37.719)))*43758.5453));
+  col+=vec3(star)*night*step(0.1,y);
+  if(y>0.02){
+    vec2 cp=dir.xz/(y+0.18)*1.5+vec2(time*0.012,0.0);
+    float d1=cloudAt(cp);
+    vec2 toSun=normalize(sun.xz+vec2(0.0001))*0.07;
+    float d2=cloudAt(cp+toSun);
+    float lighting=clamp(0.62+(d1-d2)*3.2,0.0,1.0);
+    vec3 cc=mix(vec3(0.5,0.56,0.7),vec3(1.0,0.97,0.92),lighting);
+    cc=mix(cc,vec3(1.0,0.74,0.5),pow(sd,4.0)*0.65);
+    cc*=mix(1.0,0.1,night);
+    col=mix(col,cc,d1*0.9*smoothstep(0.02,0.25,y));
+    vec2 cp2=dir.xz/(y+0.35)*vec2(0.6,2.2)+vec2(time*0.004,3.0);
+    float ci=smoothstep(0.48,0.92,fb(cp2*2.0))*0.35*smoothstep(0.1,0.5,y)*(1.0-d1);
+    col=mix(col,vec3(0.97,0.95,0.94)*mix(1.0,0.1,night),ci);
+  }
+  gl_FragColor=vec4(max(col,vec3(0.0)),1.0);
 #include <tonemapping_fragment>
 #include <encodings_fragment>
 }`
@@ -123,7 +129,7 @@ gl_FragColor=vec4(c,1.);
   const nTop = C(0, .002, .02), nBot = C(.004, .008, .03), lit = [], carEnv = [];
   function setNight(n) {
     const m = MOODS[mood]; nightV = n; SUN.set(...m.dir).normalize(); skyU.cloud.value = mood === 'fog' ? 1.6 : 1;
-    skyU.night.value = n; skyU.top.value.copy(m.top).lerp(nTop, n); skyU.bot.value.copy(m.bot).lerp(nBot, n); scene.fog.color.copy(skyU.bot.value); scene.fog.density = m.fog * (1 + n * .6);
+    skyU.night.value = n; skyU.top.value.copy(m.top).lerp(nTop, n); skyU.bot.value.copy(m.bot).lerp(nBot, n); (scene.background = scene.background || new T.Color()).copy(skyU.bot.value); scene.fog.color.copy(skyU.bot.value); scene.fog.density = m.fog * (1 + n * .6);
     sun.intensity = lerp(m.si, 0, n); moonL.intensity = n * .7; hemi.intensity = lerp(m.hemi, .2, n); renderer.toneMappingExposure = lerp(m.exp, 1.3, n);
     lit.forEach(l => { l.m.emissiveIntensity !== undefined ? l.m.emissiveIntensity = l.k * n : l.m.intensity = l.k * n; });
     carEnv.forEach(q => q.envMapIntensity = lerp(1, .12, n));
